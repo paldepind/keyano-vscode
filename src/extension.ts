@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { window, StatusBarAlignment, StatusBarItem } from "vscode";
+import { window, StatusBarAlignment, StatusBarItem, workspace } from 'vscode';
 import { bindings } from "./bindings";
 
 enum Mode {

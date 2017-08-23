@@ -1,6 +1,7 @@
-import { Extension } from "./extension";
-import { parenthesis } from "./textobjects";
+import { Extension } from './extension';
+import { parenthesis, quotes } from "./textobjects";
 import { window, Selection, workspace } from "vscode";
+import * as vscode from 'vscode';
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -50,6 +51,18 @@ export function addBinding(key: string, handler: (main: Extension) => void): voi
 }
 
 addBinding("i", (main: Extension) => main.enterInsertMode());
+
+addBinding("T", (main: Extension) => {
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+
+  const { document } = editor;
+  editor.edit((editBuilder: vscode.TextEditorEdit) => {
+    editBuilder.insert(new vscode.Position(0, 0), "fisk (taske (torsk (tanke) (mozarella) (hest) (hund) (diverse (dyr))))\n\"quote test\"");
+  });
+});
 
 addBinding("p", (main: Extension) => {
   const editor = window.activeTextEditor;
