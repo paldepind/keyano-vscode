@@ -16,7 +16,7 @@ type Range = {
 interface Object {
   findNext(text: string, from: number): Range;
   findPrev(text: string, from: number): Range;
-  findOut(text: string, from: number, to: number): Range;
+  expand(text: string, from: number, to: number): Range;
 }
 
 class PairObject implements Object {
