@@ -1,5 +1,5 @@
 import { Extension } from './extension';
-import { parenthesis, quotes } from "./textobjects";
+import { parenthesis, line } from "./textobjects";
 import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
 
@@ -106,6 +106,38 @@ addBinding("e", (main: Extension) => {
   const from = document.offsetAt(editor.selection.start);
   const to = document.offsetAt(editor.selection.end);
   const { start, end } = parenthesis.expand(text, from, to);
+  const selection = new Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
+});
+
+addBinding("k", (main: Extension) => {
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.end);
+  const { start, end } = line.findNext(text, from);
+  const selection = new Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
+});
+
+addBinding("l", (main: Extension) => {
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.start);
+  const { start, end } = line.findPrev(text, from);
   const selection = new Selection(
     document.positionAt(start),
     document.positionAt(end)

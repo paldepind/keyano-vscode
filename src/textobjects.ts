@@ -9,6 +9,36 @@ export interface TextObject {
   expand(text: string, from: number, to: number): Range;
 }
 
+export const line: TextObject = {
+  findPrev(text: string, from: number): Range {
+    if (text[from - 1] === "\n") {
+      // Selection starts at the beginning of line
+      return {
+        start: text.lastIndexOf("\n", from - 2) + 1,
+        end: from
+      };
+    }
+    const start = text.lastIndexOf("\n", from) + 1;
+    const nextLineBreak = text.indexOf("\n", from + 1);
+    const end = nextLineBreak === -1 ? text.length : nextLineBreak + 1;
+    return { start, end };
+  },
+  findNext(text: string, from: number): Range {
+    const offset = text[from] === "\n" ? -1 : 0;
+    const start = text.lastIndexOf("\n", from) + 1;
+    let end = text.indexOf("\n", from) + 1;
+    if (end === 0) {
+      end = text.length;
+    }
+    return { start, end };
+  },
+  expand(text: string, from: number, to: number): Range {
+    const end = text.indexOf("\n", from);
+    const start = text.lastIndexOf("\n", from);
+    return { start, end };
+  }
+};
+
 class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
   }
@@ -77,7 +107,7 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  expand(text: string, from: number, to: number): Range |undefined {
+  expand(text: string, from: number, to: number): Range | undefined {
     const end = this.findMatchingRight(text, to, 1) + 1;
     const start = this.findMatchingLeft(text, from - 1, 1);
 
