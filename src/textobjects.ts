@@ -13,7 +13,7 @@ class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
   }
 
-  private findRight(text: string, origin: number, counter: number = 0) {
+  private findMatchingRight(text: string, origin: number, counter: number = 0) {
     for (let i = origin; i < text.length; ++i) {
       if (text[i] === this.open) {
         ++counter;
@@ -28,7 +28,7 @@ class PairObject implements TextObject {
     return -1;
   }
 
-  private findLeft(text: string, origin: number, counter: number = 0) {
+  private findMatchingLeft(text: string, origin: number, counter: number = 0) {
     for (let i = origin; i >= 0; --i) {
       if (text[i] === this.close) {
         ++counter;
@@ -43,21 +43,43 @@ class PairObject implements TextObject {
     return -1;
   }
 
-  findNext(text: string, from: number) {
-    const start = text.indexOf(this.open, from);
-    const end = this.findRight(text, start) + 1;
+  private find(text, delimiter): Range | undefined {
+    if (text[delimiter] === this.open) {
+      const start = delimiter;
+      const end = this.findMatchingRight(text, delimiter) + 1;
+      return { start, end };
+    } else if (text[delimiter] === this.close) {
+      const end = delimiter + 1;
+      const start = this.findMatchingLeft(text, end);
+      return { start, end }
+    }
 
-    return start === -1 || end === 0 ? undefined : { start, end };
+    return undefined;
   }
-  findPrev(text: string, from: number) {
-    const end = text.lastIndexOf(this.close, from) + 1;
-    const start = this.findLeft(text, end);
 
-    return start === -1 || end === 0 ? undefined : { start, end };
+  findNext(text: string, from: number): Range | undefined {
+    for (let delimiter = from; delimiter < text.length; ++delimiter) {
+      if (text[delimiter] === this.open || text[delimiter] === this.close) {
+        return this.find(text, delimiter);
+      }
+    }
+
+    return undefined;
   }
-  expand(text: string, from: number, to: number): Range {
-    const end = this.findRight(text, to, 1) + 1;
-    const start = this.findLeft(text, from - 1, 1);
+
+  findPrev(text: string, from: number): Range | undefined {
+    for (let delimiter = from - 1; delimiter >= 0; --delimiter) {
+      if (text[delimiter] === this.open || text[delimiter] === this.close) {
+        return this.find(text, delimiter);
+      }
+    }
+
+    return undefined;
+  }
+
+  expand(text: string, from: number, to: number): Range |undefined {
+    const end = this.findMatchingRight(text, to, 1) + 1;
+    const start = this.findMatchingLeft(text, from - 1, 1);
 
     return start === -1 || end === 0 ? undefined : { start, end };
   }
