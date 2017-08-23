@@ -24,12 +24,18 @@ class Keyano {
     this.mode = Mode.Command;
     this.statusBarItem.text = "$(tools)";
     this.statusBarItem.tooltip = "Command mode";
+    if (window.activeTextEditor !== undefined) {
+      window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.Block;
+    }
   }
 
   enterInsertMode() {
     this.mode = Mode.Insert;
     this.statusBarItem.text = "$(pencil)";
     this.statusBarItem.tooltip = "Insert mode";
+    if (window.activeTextEditor !== undefined) {
+      window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.Line;
+    }
   }
 
   handleKey(char: string): void {

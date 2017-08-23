@@ -15,8 +15,7 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
-    "commands": [
-    ],
+    "commands": [],
     "keybindings": [
       {
         "key": "Escape",
