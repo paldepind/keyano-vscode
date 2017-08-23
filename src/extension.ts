@@ -20,22 +20,59 @@ interface Object {
 }
 
 class PairObject implements Object {
-  constructor(private start: string, private end: string) {
+  constructor(private open: string, private close: string) {
   }
+
+  private findRight(text: string, origin: number, counter: number = 0) {
+    for (let i = origin; i < text.length; ++i) {
+      if (text[i] === this.open) {
+        ++counter;
+      } else if (text[i] === this.close) {
+        --counter;
+        if (counter === 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  private findLeft(text: string, origin: number, counter: number = 0) {
+    for (let i = origin; i >= 0; --i) {
+      if (text[i] === this.close) {
+        ++counter;
+      } else if (text[i] === this.open) {
+        --counter;
+        if (counter === 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
   findNext(text: string, from: number) {
-    const start = text.indexOf(this.start, from);
-    // FIXME: Find matching pair correctly
-    const end = text.indexOf(this.end, start) + 1;
-    return { start, end };
+    const start = text.indexOf(this.open, from);
+    const end = this.findRight(text, start) + 1;
+
+    return start === -1 || end === 0 ? undefined : { start, end };
   }
   findPrev(text: string, from: number) {
-    const end = text.lastIndexOf(this.end, from) + 1;
-    // FIXME: Find matching pair correctly
-    const start = text.lastIndexOf(this.end, end);
-    return { start, end };
+    const end = text.lastIndexOf(this.close, from) + 1;
+    const start = this.findLeft(text, end);
+
+    return start === -1 || end === 0 ? undefined : { start, end };
   }
   expand(text: string, from: number, to: number): Range {
-    return <any>"FIXME";
+    const end = this.findRight(text, to, 1) + 1;
+    const start = this.findLeft(text, from - 1, 1);
+
+    console.log("start: " + start);
+    console.log("end: " + end);
+
+    return start === -1 || end === 0 ? undefined : { start, end };
   }
 }
 
@@ -48,6 +85,7 @@ const bindings = new Map<string, (main: Keyano) => void>();
 bindings.set("i", (main: Keyano) => main.enterInsertMode());
 
 bindings.set("p", (main: Keyano) => {
+  console.log("Next");
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -56,6 +94,41 @@ bindings.set("p", (main: Keyano) => {
   const text = document.getText();
   const from = document.offsetAt(editor.selection.end);
   const { start, end } = parenthesis.findNext(text, from);
+  const selection = new vscode.Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
+});
+
+bindings.set("P", (main: Keyano) => {
+  console.log("Previous");
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.start);
+  const { start, end } = parenthesis.findPrev(text, from);
+  const selection = new vscode.Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
+});
+
+bindings.set("e", (main: Keyano) => {
+  console.log("Expand");
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.start);
+  const to = document.offsetAt(editor.selection.end);
+  const { start, end } = parenthesis.expand(text, from, to);
   const selection = new vscode.Selection(
     document.positionAt(start),
     document.positionAt(end)
