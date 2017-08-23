@@ -51,7 +51,12 @@
     "no-string-literal": true,
     "no-trailing-whitespace": true,
     "no-unused-expression": true,
-    "no-unused-variable": [true, {"ignore-pattern": "^_"}],
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
     "no-var-keyword": true,
     "no-var-requires": true,
     "one-line": [
@@ -72,7 +77,10 @@
       "avoid-escape"
     ],
     "radix": true,
-    "semicolon": [true, "always"],
+    "semicolon": [
+      true,
+      "always"
+    ],
     "switch-default": true,
     "trailing-comma": [
       true,
@@ -85,11 +93,7 @@
       true
     ],
     "typedef": [
-      true,
-      "call-signature",
-      "parameter",
-      "property-declaration",
-      "member-variable-declaration"
+      false
     ],
     "typedef-whitespace": [
       true,
