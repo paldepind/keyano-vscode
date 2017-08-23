@@ -11,7 +11,6 @@ export function addBinding(key: string, handler: (main: Extension) => void): voi
 addBinding("i", (main: Extension) => main.enterInsertMode());
 
 addBinding("p", (main: Extension) => {
-  console.log("Next");
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -28,7 +27,6 @@ addBinding("p", (main: Extension) => {
 });
 
 addBinding("P", (main: Extension) => {
-  console.log("Previous");
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -45,7 +43,6 @@ addBinding("P", (main: Extension) => {
 });
 
 addBinding("e", (main: Extension) => {
-  console.log("Expand");
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;

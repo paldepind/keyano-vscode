@@ -59,9 +59,6 @@ class PairObject implements TextObject {
     const end = this.findRight(text, to, 1) + 1;
     const start = this.findLeft(text, from - 1, 1);
 
-    console.log("start: " + start);
-    console.log("end: " + end);
-
     return start === -1 || end === 0 ? undefined : { start, end };
   }
 }
