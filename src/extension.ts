@@ -1,27 +1,67 @@
-'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import { window, StatusBarAlignment, StatusBarItem } from "vscode";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+enum Mode {
+  Command,
+  Insert
+}
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "keyano" is now active!');
+// This class encapsulates the global state and the methods on it. A
+// single instance is created when the extension is activated.
+class Keyano {
+  statusBarItem: StatusBarItem;
+  mode: Mode;
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
+  constructor() {
+    this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
+    this.enterCommandMode();
+    this.statusBarItem.show();
+  }
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
+  enterCommandMode() {
+    this.mode = Mode.Command;
+    this.statusBarItem.text = "$(tools)";
+    this.statusBarItem.tooltip = "Command mode";
+  }
 
+  enterInsertMode() {
+    this.mode = Mode.Insert;
+    this.statusBarItem.text = "$(pencil)";
+    this.statusBarItem.tooltip = "Insert mode";
+  }
+
+  handleKey(char: string): void {
+    if (char === "i") {
+      this.enterInsertMode();
+    }
+  }
+}
+
+function registerCommandDisposable(context) {
+  return (commandId: string, run: (...args: any[]) => void): void => {
+    const disposable = vscode.commands.registerCommand(commandId, run);
     context.subscriptions.push(disposable);
+  };
+}
+
+// this function is called when the extension is activated
+export function activate(context: vscode.ExtensionContext) {
+  const extension = new Keyano();
+  const registerCommand = registerCommandDisposable(context);
+
+  registerCommand("keyano.escape", () => {
+    extension.enterCommandMode();
+  });
+
+  vscode.commands.registerCommand("type", (arg) => {
+    if (extension.mode === Mode.Insert) {
+      vscode.commands.executeCommand("default:type", arg);
+    } else {
+      extension.handleKey(arg.text);
+    }
+  });
 }
 
 // this method is called when your extension is deactivated
