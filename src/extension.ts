@@ -1,71 +1,15 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { window, StatusBarAlignment, StatusBarItem } from "vscode";
+import { bindings } from "./bindings";
 
 enum Mode {
   Command,
   Insert
 }
 
-type Range = {
-  start: number,
-  end: number
-};
-
-interface Object {
-  findNext(text: string, from: number): Range;
-  findPrev(text: string, from: number): Range;
-  expand(text: string, from: number, to: number): Range;
-}
-
-class PairObject implements Object {
-  constructor(private start: string, private end: string) {
-  }
-  findNext(text: string, from: number) {
-    const start = text.indexOf(this.start, from);
-    // FIXME: Find matching pair correctly
-    const end = text.indexOf(this.end, start) + 1;
-    return { start, end };
-  }
-  findPrev(text: string, from: number) {
-    const end = text.lastIndexOf(this.end, from) + 1;
-    // FIXME: Find matching pair correctly
-    const start = text.lastIndexOf(this.end, end);
-    return { start, end };
-  }
-  expand(text: string, from: number, to: number): Range {
-    return <any>"FIXME";
-  }
-}
-
-const parenthesis = new PairObject("(", ")");
-
-// handles the bindings
-
-const bindings = new Map<string, (main: Keyano) => void>();
-
-bindings.set("i", (main: Keyano) => main.enterInsertMode());
-
-bindings.set("p", (main: Keyano) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.end);
-  const { start, end } = parenthesis.findNext(text, from);
-  const selection = new vscode.Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
 // This class encapsulates the global state and the methods on it. A
 // single instance is created when the extension is activated.
-class Keyano {
+export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
 
@@ -110,7 +54,7 @@ function registerCommandDisposable(context) {
 
 // this function is called when the extension is activated
 export function activate(context: vscode.ExtensionContext) {
-  const extension = new Keyano();
+  const extension = new Extension();
   const registerCommand = registerCommandDisposable(context);
 
   registerCommand("keyano.escape", () => {
