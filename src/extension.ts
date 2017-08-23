@@ -25,11 +25,11 @@ class PairObject implements Object {
   findNext(text: string, from: number) {
     const start = text.indexOf(this.start, from);
     // FIXME: Find matching pair correctly
-    const end = text.indexOf(this.end, start);
+    const end = text.indexOf(this.end, start) + 1;
     return { start, end };
   }
   findPrev(text: string, from: number) {
-    const end = text.lastIndexOf(this.end, from);
+    const end = text.lastIndexOf(this.end, from) + 1;
     // FIXME: Find matching pair correctly
     const start = text.lastIndexOf(this.end, end);
     return { start, end };
@@ -52,7 +52,15 @@ bindings.set("p", (main: Keyano) => {
   if (editor === undefined) {
     return;
   }
-  console.log("Select parenthesis");
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.end);
+  const { start, end } = parenthesis.findNext(text, from);
+  const selection = new vscode.Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
 });
 
 // This class encapsulates the global state and the methods on it. A
