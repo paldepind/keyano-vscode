@@ -8,6 +8,53 @@ enum Mode {
   Insert
 }
 
+type Range = {
+  start: number,
+  end: number
+};
+
+interface Object {
+  findNext(text: string, from: number): Range;
+  findPrev(text: string, from: number): Range;
+  findOut(text: string, from: number, to: number): Range;
+}
+
+class PairObject implements Object {
+  constructor(private start: string, private end: string) {
+  }
+  findNext(text: string, from: number) {
+    const start = text.indexOf(this.start, from);
+    // FIXME: Find matching pair correctly
+    const end = text.indexOf(this.end, start);
+    return { start, end };
+  }
+  findPrev(text: string, from: number) {
+    const end = text.lastIndexOf(this.end, from);
+    // FIXME: Find matching pair correctly
+    const start = text.lastIndexOf(this.end, end);
+    return { start, end };
+  }
+  expand(text: string, from: number, to: number): Range {
+    return <any>"FIXME";
+  }
+}
+
+const parenthesis = new PairObject("(", ")");
+
+// handles the bindings
+
+const bindings = new Map<string, (main: Keyano) => void>();
+
+bindings.set("i", (main: Keyano) => main.enterInsertMode());
+
+bindings.set("p", (main: Keyano) => {
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  console.log("Select parenthesis");
+});
+
 // This class encapsulates the global state and the methods on it. A
 // single instance is created when the extension is activated.
 class Keyano {
@@ -39,8 +86,9 @@ class Keyano {
   }
 
   handleKey(char: string): void {
-    if (char === "i") {
-      this.enterInsertMode();
+    const handler = bindings.get(char);
+    if (handler !== undefined) {
+      handler(this);
     }
   }
 }
