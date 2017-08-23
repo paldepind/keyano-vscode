@@ -16,6 +16,18 @@
   "main": "./out/src/extension",
   "contributes": {
     "commands": [],
+    "configuration": {
+      "type": "object",
+      "title": "Keyano configuration",
+      "properties": {
+        "keyano.keyboardLayout": {
+          "type": "string",
+          "enum": ["qwerty", "colemak"],
+          "default": "qwerty",
+          "description": "The keyboard layout that should be used to correctly place positional bindings."
+        }
+      }
+    },
     "keybindings": [
       {
         "key": "Escape",

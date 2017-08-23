@@ -1,11 +1,52 @@
 import { Extension } from "./extension";
 import { parenthesis } from "./textobjects";
-import { window, Selection } from "vscode";
+import { window, Selection, workspace } from "vscode";
+
+const configuration = workspace.getConfiguration("keyano");
+
+const qwertyToColemak = new Map([
+  ["q", "q"],
+  ["w", "w"],
+  ["e", "f"],
+  ["r", "p"],
+  ["t", "g"],
+  ["y", "j"],
+  ["u", "l"],
+  ["i", "u"],
+  ["o", "y"],
+  ["p", ";"],
+  ["a", "a"],
+  ["s", "s"],
+  ["d", "s"],
+  ["f", "t"],
+  ["g", "d"],
+  ["h", "h"],
+  ["j", "n"],
+  ["k", "e"],
+  ["l", "i"],
+  [";", "o"],
+  ["z", "z"],
+  ["x", "x"],
+  ["c", "c"],
+  ["v", "v"],
+  ["b", "b"],
+  ["n", "k"],
+  ["m", "m"]
+]);
+
+function translateCharacter(char: string): string {
+  const layout = configuration.keyboardLayout;
+  if (layout === "colemak") {
+    return qwertyToColemak.get(char);
+  } else {
+    return char;
+  }
+}
 
 export const bindings = new Map<string, (main: Extension) => void>();
 
 export function addBinding(key: string, handler: (main: Extension) => void): void {
-  bindings.set(key, handler);
+  bindings.set(translateCharacter(key), handler);
 }
 
 addBinding("i", (main: Extension) => main.enterInsertMode());
