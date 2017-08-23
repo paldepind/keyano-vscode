@@ -3,13 +3,13 @@ type Range = {
   end: number
 };
 
-export interface TextObject {
+export interface ITextObject {
   findNext(text: string, from: number): Range;
   findPrev(text: string, from: number): Range;
   expand(text: string, from: number, to: number): Range;
 }
 
-class PairObject implements TextObject {
+class PairObject implements ITextObject {
   constructor(private open: string, private close: string) {
   }
 
@@ -50,7 +50,7 @@ class PairObject implements TextObject {
       return { start, end };
     } else if (text[delimiter] === this.close) {
       const end = delimiter + 1;
-      const start = this.findMatchingLeft(text, end);
+      const start = this.findMatchingLeft(text, end - 1);
       return { start, end }
     }
 

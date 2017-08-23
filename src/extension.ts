@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { window, StatusBarAlignment, StatusBarItem, workspace } from 'vscode';
 import { bindings } from "./bindings";
+import { IPrefix } from "./prefix";
 
 enum Mode {
   Command,
@@ -12,6 +13,7 @@ enum Mode {
 export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
+  prefix: IPrefix;
 
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
@@ -38,9 +40,13 @@ export class Extension {
   }
 
   handleKey(char: string): void {
-    const handler = bindings.get(char);
-    if (handler !== undefined) {
-      handler(this);
+    if (this.prefix) {
+      this.prefix.argument(this, char);
+    } else {
+      const handler = bindings.get(char);
+      if (handler !== undefined) {
+        handler(this);
+      }
     }
   }
 }
