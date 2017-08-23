@@ -2,6 +2,7 @@ import { Extension } from './extension';
 import { parenthesis, line } from "./textobjects";
 import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
+import { repeater } from './prefix';
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -144,3 +145,10 @@ addBinding("l", (main: Extension) => {
   );
   editor.selection = selection;
 });
+
+for (let i = 0; i < 10; ++i) {
+  addBinding(i.toString(), (main: Extension) => {
+    repeater.apply(main);
+    repeater.argument(main, i.toString());
+  });
+}

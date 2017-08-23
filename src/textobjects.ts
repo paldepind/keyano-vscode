@@ -80,8 +80,8 @@ class PairObject implements TextObject {
       return { start, end };
     } else if (text[delimiter] === this.close) {
       const end = delimiter + 1;
-      const start = this.findMatchingLeft(text, end);
-      return { start, end }
+      const start = this.findMatchingLeft(text, end - 1);
+      return { start, end };
     }
 
     return undefined;
