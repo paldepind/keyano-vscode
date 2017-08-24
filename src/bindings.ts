@@ -1,8 +1,12 @@
 import { Extension } from './extension';
-import { parenthesis, line } from "./textobjects";
 import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
-import { repeater } from './prefix';
+import { TextObject } from './textobjects';
+import * as textObjects from './textobjects';
+import { Command } from './commands';
+import * as commands from './commands'
+import { Action } from './actions';
+import * as actions from './actions';
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -45,110 +49,18 @@ function translateCharacter(char: string): string {
   }
 }
 
-export const bindings = new Map<string, (main: Extension) => void>();
+export const bindings = new Map<string, Array<Command | Action | TextObject>>();
 
-export function addBinding(key: string, handler: (main: Extension) => void): void {
-  bindings.set(translateCharacter(key), handler);
+export function addBinding(key: string, stack: Array<Command | Action | TextObject>): void {
+  bindings.set(translateCharacter(key), stack);
 }
 
-addBinding("i", (main: Extension) => main.enterInsertMode());
+addBinding("i", [actions.enterInsertMode]);
 
-addBinding("T", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
+addBinding("<", [commands.selectPrev]);
+addBinding(">", [commands.selectNext]);
 
-  const { document } = editor;
-  editor.edit((editBuilder: vscode.TextEditorEdit) => {
-    editBuilder.insert(new vscode.Position(0, 0), "fisk (taske (torsk (tanke) (mozarella) (hest) (hund) (diverse (dyr))))\n\"quote test\"");
-  });
-});
+addBinding("p", [textObjects.parenthesis]);
 
-addBinding("p", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.end);
-  const { start, end } = parenthesis.findNext(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("P", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const { start, end } = parenthesis.findPrev(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("e", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const to = document.offsetAt(editor.selection.end);
-  const { start, end } = parenthesis.expand(text, from, to);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("k", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.end);
-  const { start, end } = line.findNext(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("l", (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const { start, end } = line.findPrev(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-for (let i = 0; i < 10; ++i) {
-  addBinding(i.toString(), (main: Extension) => {
-    repeater.apply(main);
-    repeater.argument(main, i.toString());
-  });
-}
+addBinding("k", [commands.selectNext, textObjects.line]);
+addBinding("l", [commands.selectPrev, textObjects.line]);
