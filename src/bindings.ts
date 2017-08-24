@@ -1,7 +1,7 @@
-import { Extension } from './extension';
-import { parenthesis, line } from "./textobjects";
-import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
+import { window, Selection, workspace } from "vscode";
+import { Extension } from './extension';
+import { parenthesis, line, word } from "./textobjects";
 
 import { repeater } from './prefix';
 import { deleteSelections } from "./actions";
@@ -141,6 +141,22 @@ addBinding("l", async (main: Extension) => {
   const text = document.getText();
   const from = document.offsetAt(editor.selection.start);
   const { start, end } = line.findPrev(text, from);
+  const selection = new Selection(
+    document.positionAt(start),
+    document.positionAt(end)
+  );
+  editor.selection = selection;
+});
+
+addBinding("j", async (main: Extension) => {
+  const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    return;
+  }
+  const { document } = editor;
+  const text = document.getText();
+  const from = document.offsetAt(editor.selection.start);
+  const { start, end } = word.findNext(text, from);
   const selection = new Selection(
     document.positionAt(start),
     document.positionAt(end)

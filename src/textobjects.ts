@@ -1,3 +1,5 @@
+import { workspace } from "vscode";
+
 type Range = {
   start: number,
   end: number
@@ -8,6 +10,72 @@ export interface TextObject {
   findPrev(text: string, from: number): Range;
   expand(text: string, from: number, to: number): Range;
 }
+
+// word
+
+enum CharacterType {
+  Whitespace,
+  Word,
+  NonWord
+}
+
+function isWhitespace(char: string): boolean {
+  if (
+    char === "\u0020" || char === "\u0009" || char === "\u000A" ||
+    char === "\u000C" || char === "\u000D"
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const wordSeperators = new Set("~!@#$ %^&*()-=+[{]}\\|;:'\",.<>/?");
+
+function isWordSeperator(char: string): boolean {
+  return wordSeperators.has(char);
+}
+
+function findWhere(
+  text: string,
+  predicate: (char: string) => boolean,
+  from: number,
+  direction: number = 1
+): number {
+  let i = from;
+  while (0 <= i && predicate(text[i]) === false) {
+    i += direction;
+  }
+  return i;
+}
+
+function getCharacterType(char: string): CharacterType {
+  if (isWhitespace(char)) {
+    return CharacterType.Whitespace;
+  } else if (wordSeperators.has(char)) {
+    return CharacterType.NonWord;
+  } else {
+    return CharacterType.Word;
+  }
+}
+
+export const word: TextObject = {
+  findPrev() {
+    return undefined; // FIXME: add find prev
+  },
+  findNext(text: string, from: number): Range {
+    let end = findWhere(text, isWhitespace, from);
+    let start = findWhere(text, isWhitespace, from, -1) + 1;
+    return { start, end };
+  },
+  expand(text: string, from: number, to: number) {
+    let end = findWhere(text, isWhitespace, to);
+    let start = findWhere(text, isWhitespace, from, -1) + 1;
+    return { start, end };
+  }
+};
+
+// line
 
 export const line: TextObject = {
   findPrev(text: string, from: number): Range {
