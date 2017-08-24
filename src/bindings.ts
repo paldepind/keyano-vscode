@@ -59,8 +59,10 @@ addBinding("i", [actions.enterInsertMode]);
 
 addBinding("<", [commands.selectPrev]);
 addBinding(">", [commands.selectNext]);
+addBinding("e", [commands.expand]);
 
 addBinding("p", [textObjects.parenthesis]);
+addBinding("o", [textObjects.line]);``
 
 addBinding("k", [commands.selectNext, textObjects.line]);
 addBinding("l", [commands.selectPrev, textObjects.line]);

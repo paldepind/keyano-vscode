@@ -72,7 +72,7 @@ export class Extension {
 
     if (command) {
       const result = command.argument(this, char, obj);
-      if (result === CommandResult.BLOCK) {
+      if (result === CommandResult.WAITING) {
         this.commandStack.push(command);
       } else if (result === CommandResult.ERROR) {
         this.commandStack = [];

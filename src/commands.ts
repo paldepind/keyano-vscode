@@ -5,8 +5,8 @@ import { TextObject } from "./textobjects";
 
 export enum CommandResult {
   ERROR,
-  BLOCK,
-  BLOCK_AND_REMOVE
+  WAITING,
+  FINISHED
 }
 
 export interface Command {
@@ -30,7 +30,7 @@ export const selectNext: Command = {
       );
       editor.selection = selection;
 
-      return CommandResult.BLOCK_AND_REMOVE;
+      return CommandResult.FINISHED;
     }
 
     return CommandResult.ERROR;
@@ -39,7 +39,7 @@ export const selectNext: Command = {
 
 export const selectPrev: Command = {
   argument(main, char, obj) {
-    if (isTextObject(obj)) {
+    if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
         return;
@@ -54,7 +54,32 @@ export const selectPrev: Command = {
       );
       editor.selection = selection;
 
-      return CommandResult.BLOCK_AND_REMOVE;
+      return CommandResult.FINISHED;
+    }
+
+    return CommandResult.ERROR;
+  }
+}
+
+export const expand: Command = {
+  argument(main, char, obj) {
+    if (obj) {
+      const editor = window.activeTextEditor;
+      if (editor === undefined) {
+        return;
+      }
+      const { document } = editor;
+      const text = document.getText();
+      const from = document.offsetAt(editor.selection.start);
+      const to = document.offsetAt(editor.selection.end);
+      const { start, end } = obj.expand(text, from, to);
+      const selection = new Selection(
+        document.positionAt(start),
+        document.positionAt(end)
+      );
+      editor.selection = selection;
+
+      return CommandResult.FINISHED;
     }
 
     return CommandResult.ERROR;
