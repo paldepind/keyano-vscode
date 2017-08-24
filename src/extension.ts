@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { window, StatusBarAlignment, StatusBarItem, workspace } from 'vscode';
 import { bindings } from './bindings';
 import { Command, CommandResult } from './commands';
+import * as commands from './commands';
 import { isTextObject, isCommand, isAction } from './utils';
 import { TextObject } from './textobjects';
 
@@ -58,6 +59,8 @@ export class Extension {
             this.commandStack.push(current);
           } else if (isAction(current)) {
             current.execute(this);
+          } else if (isTextObject(current)) {
+            commands.selectNext.argument(this, char, current);
           }
         }
       }
