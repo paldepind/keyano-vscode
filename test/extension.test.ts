@@ -41,6 +41,9 @@ export async function setupWorkspace(fileExtension: string = ""): Promise<void> 
 export async function setFileContent(text: string): Promise<vscode.TextEditor> {
   await setupWorkspace();
   const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    throw new Error("No active editor");
+  }
   const { document } = editor;
   const selection = new Selection(document.positionAt(0), document.positionAt(Infinity));
   await editor.edit((builder) => {

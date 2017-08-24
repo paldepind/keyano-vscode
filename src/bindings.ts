@@ -1,9 +1,9 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { window, Selection, workspace } from "vscode";
-import { Extension } from './extension';
+import { Extension } from "./extension";
 import { parenthesis, line, word } from "./textobjects";
 
-import { repeater } from './prefix';
+import { repeater } from "./prefix";
 import { deleteSelections } from "./actions";
 
 const configuration = workspace.getConfiguration("keyano");
@@ -41,7 +41,8 @@ const qwertyToColemak = new Map([
 function translateCharacter(char: string): string {
   const layout = configuration.keyboardLayout;
   if (layout === "colemak") {
-    return qwertyToColemak.get(char);
+    const translated = qwertyToColemak.get(char);
+    return translated === undefined ? char : translated;
   } else {
     return char;
   }
@@ -75,7 +76,11 @@ addBinding("p", async (main: Extension) => {
   const { document } = editor;
   const text = document.getText();
   const from = document.offsetAt(editor.selection.end);
-  const { start, end } = parenthesis.findNext(text, from);
+  const next = parenthesis.findNext(text, from);
+  if (next === undefined) {
+    return;
+  }
+  const { start, end } = next;
   const selection = new Selection(
     document.positionAt(start),
     document.positionAt(end)
@@ -91,7 +96,11 @@ addBinding("P", async (main: Extension) => {
   const { document } = editor;
   const text = document.getText();
   const from = document.offsetAt(editor.selection.start);
-  const { start, end } = parenthesis.findPrev(text, from);
+  const next = parenthesis.findPrev(text, from);
+  if (next === undefined) {
+    return;
+  }
+  const { start, end } = next;
   const selection = new Selection(
     document.positionAt(start),
     document.positionAt(end)
@@ -108,7 +117,11 @@ addBinding("e", async (main: Extension) => {
   const text = document.getText();
   const from = document.offsetAt(editor.selection.start);
   const to = document.offsetAt(editor.selection.end);
-  const { start, end } = parenthesis.expand(text, from, to);
+  const next = parenthesis.expand(text, from, to);
+  if (next === undefined) {
+    return;
+  }
+  const { start, end } = next;
   const selection = new Selection(
     document.positionAt(start),
     document.positionAt(end)

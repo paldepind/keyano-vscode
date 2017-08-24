@@ -6,9 +6,9 @@ type Range = {
 };
 
 export interface TextObject {
-  findNext(text: string, from: number): Range;
-  findPrev(text: string, from: number): Range;
-  expand(text: string, from: number, to: number): Range;
+  findNext(text: string, from: number): Range | undefined;
+  findPrev(text: string, from: number): Range | undefined;
+  expand(text: string, from: number, to: number): Range | undefined;
 }
 
 // word
@@ -141,7 +141,7 @@ class PairObject implements TextObject {
     return -1;
   }
 
-  private find(text, delimiter): Range | undefined {
+  private find(text: string, delimiter: number): Range | undefined {
     if (text[delimiter] === this.open) {
       const start = delimiter;
       const end = this.findMatchingRight(text, delimiter) + 1;

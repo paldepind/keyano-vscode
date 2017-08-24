@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { window, StatusBarAlignment, StatusBarItem, workspace } from 'vscode';
+import { window, StatusBarAlignment, StatusBarItem, workspace } from "vscode";
 import { bindings } from "./bindings";
 import { Prefix } from "./prefix";
 
@@ -13,7 +13,7 @@ enum Mode {
 export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
-  prefix: Prefix;
+  prefix: Prefix | undefined;
 
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
@@ -51,7 +51,7 @@ export class Extension {
   }
 }
 
-function registerCommandDisposable(context) {
+function registerCommandDisposable(context: vscode.ExtensionContext) {
   return (commandId: string, run: (...args: any[]) => void): void => {
     const disposable = vscode.commands.registerCommand(commandId, run);
     context.subscriptions.push(disposable);
