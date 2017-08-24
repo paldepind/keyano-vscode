@@ -10,11 +10,11 @@ export enum CommandResult {
 }
 
 export interface Command {
-  argument(main: Extension, char: string, obj: TextObject): CommandResult;
+  argument(main: Extension, char: string, obj: TextObject | undefined): CommandResult;
 }
 
 export const selectNext: Command = {
-  argument(main, char, obj) {
+  argument(main: Extension, char: string, obj: TextObject | undefined) {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
@@ -27,7 +27,7 @@ export const selectNext: Command = {
       const result = obj.findNext(text, from);
       if (result) {
         const { start, end } = result;
-        
+
         if (start && end) {
           const selection = new Selection(
             document.positionAt(start),
@@ -45,7 +45,7 @@ export const selectNext: Command = {
 }
 
 export const selectPrev: Command = {
-  argument(main, char, obj) {
+  argument(main: Extension, char: string, obj: TextObject | undefined) {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
@@ -77,7 +77,7 @@ export const selectPrev: Command = {
 }
 
 export const selectAll: Command = {
-  argument(main, char, obj) {
+  argument(main: Extension, char: string, obj: TextObject | undefined) {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
@@ -112,7 +112,7 @@ export const selectAll: Command = {
 }
 
 export const expand: Command = {
-  argument(main, char, obj) {
+  argument(main: Extension, char: string, obj: TextObject | undefined) {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {

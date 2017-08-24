@@ -5,7 +5,7 @@ export interface Action {
 }
 
 export const enterInsertMode: Action = {
-  execute(main) {
+  execute(main: Extension) {
     main.enterInsertMode();
   }
 }

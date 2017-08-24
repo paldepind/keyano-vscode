@@ -70,7 +70,7 @@ export class Extension {
   }
 
   // True if it was run on the callstack, false if not.
-  private runOnCommandStack(char: string, obj: TextObject): boolean {
+  private runOnCommandStack(char: string, obj: TextObject | undefined): boolean {
     const command = this.commandStack.pop();
 
     if (command) {
