@@ -23,8 +23,8 @@ export const line: TextObject = {
     const end = nextLineBreak === -1 ? text.length : nextLineBreak + 1;
     return { start, end };
   },
+
   findNext(text: string, from: number): Range {
-    const offset = text[from] === "\n" ? -1 : 0;
     const start = text.lastIndexOf("\n", from) + 1;
     let end = text.indexOf("\n", from) + 1;
     if (end === 0) {
@@ -32,9 +32,27 @@ export const line: TextObject = {
     }
     return { start, end };
   },
+  
   expand(text: string, from: number, to: number): Range {
-    const end = text.indexOf("\n", from);
-    const start = text.lastIndexOf("\n", from);
+    // Fixes edge case when cursor is at the start of a line, with no selection made.
+    if (from === to) {
+      return this.findNext(text, from);
+    }
+
+    let end = text.indexOf("\n", to) + 1;
+    if (end === 0) {
+      end = text.length;
+    }
+    
+    if (text[from - 1] === "\n") {
+      // Selection starts at the beginning of line
+      return {
+        start: text.lastIndexOf("\n", from - 2) + 1,
+        end: end
+      };
+    }
+    const start = text.lastIndexOf("\n", from) + 1;
+
     return { start, end };
   }
 };
