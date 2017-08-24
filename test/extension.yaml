@@ -17,3 +17,15 @@
       the|re is (a parenthesis)
     input: p
     selection is: (a parenthesis)
+
+- describe: delete
+  scenarios:
+  - it: deletes line
+    start: |
+      this is a line
+      horse mo|nkey fish
+      this is a another line
+    input: kx
+    text is: |
+      this is a line
+      this is a another line

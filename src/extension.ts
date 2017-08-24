@@ -39,13 +39,13 @@ export class Extension {
     }
   }
 
-  handleKey(char: string): void {
+  async handleKey(char: string): Promise<void> {
     if (this.prefix) {
       this.prefix.argument(this, char);
     } else {
       const handler = bindings.get(char);
       if (handler !== undefined) {
-        handler(this);
+        await handler(this);
       }
     }
   }

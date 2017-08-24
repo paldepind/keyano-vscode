@@ -2,7 +2,9 @@ import { Extension } from './extension';
 import { parenthesis, line } from "./textobjects";
 import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
+
 import { repeater } from './prefix';
+import { deleteSelections } from "./actions";
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -45,15 +47,15 @@ function translateCharacter(char: string): string {
   }
 }
 
-export const bindings = new Map<string, (main: Extension) => void>();
+export const bindings = new Map<string, (main: Extension) => Promise<void>>();
 
-export function addBinding(key: string, handler: (main: Extension) => void): void {
+export function addBinding(key: string, handler: (main: Extension) => Promise<void>): void {
   bindings.set(translateCharacter(key), handler);
 }
 
-addBinding("i", (main: Extension) => main.enterInsertMode());
+addBinding("i", async (main: Extension) => main.enterInsertMode());
 
-addBinding("T", (main: Extension) => {
+addBinding("T", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -65,7 +67,7 @@ addBinding("T", (main: Extension) => {
   });
 });
 
-addBinding("p", (main: Extension) => {
+addBinding("p", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -81,7 +83,7 @@ addBinding("p", (main: Extension) => {
   editor.selection = selection;
 });
 
-addBinding("P", (main: Extension) => {
+addBinding("P", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -97,7 +99,7 @@ addBinding("P", (main: Extension) => {
   editor.selection = selection;
 });
 
-addBinding("e", (main: Extension) => {
+addBinding("e", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -114,7 +116,7 @@ addBinding("e", (main: Extension) => {
   editor.selection = selection;
 });
 
-addBinding("k", (main: Extension) => {
+addBinding("k", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -130,7 +132,7 @@ addBinding("k", (main: Extension) => {
   editor.selection = selection;
 });
 
-addBinding("l", (main: Extension) => {
+addBinding("l", async (main: Extension) => {
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     return;
@@ -147,8 +149,10 @@ addBinding("l", (main: Extension) => {
 });
 
 for (let i = 0; i < 10; ++i) {
-  addBinding(i.toString(), (main: Extension) => {
+  addBinding(i.toString(), async (main: Extension) => {
     repeater.apply(main);
     repeater.argument(main, i.toString());
   });
 }
+
+addBinding("x", deleteSelections);

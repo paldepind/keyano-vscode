@@ -54,7 +54,8 @@ type Scenario = {
   it: string,
   start: string,
   input: string,
-  "selection is"?: string
+  "selection is"?: string,
+  "text is"?: string
 };
 
 type Describe = {
@@ -78,10 +79,20 @@ for (const description of tests) {
         const cursorPosition = document.positionAt(scenario.start.indexOf("|"));
         editor.selection = new Selection(cursorPosition, cursorPosition);
         for (const char of scenario.input) {
-          extension.handleKey(char);
+          await extension.handleKey(char);
         }
+        // handle the asserts
         if (scenario["selection is"]) {
-          assert.strictEqual(document.getText(editor.selection), scenario["selection is"]);
+          assert.strictEqual(
+            document.getText(editor.selection),
+            scenario["selection is"]
+          );
+        }
+        if (scenario["text is"]) {
+          assert.strictEqual(
+            document.getText(),
+            scenario["text is"]
+          );
         }
       });
     }
