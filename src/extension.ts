@@ -58,22 +58,27 @@ function registerCommandDisposable(context) {
   };
 }
 
+export const extension = new Extension();
+
 // this function is called when the extension is activated
 export function activate(context: vscode.ExtensionContext) {
-  const extension = new Extension();
   const registerCommand = registerCommandDisposable(context);
 
   registerCommand("keyano.escape", () => {
     extension.enterCommandMode();
   });
 
-  vscode.commands.registerCommand("type", (arg) => {
-    if (extension.mode === Mode.Insert) {
-      vscode.commands.executeCommand("default:type", arg);
-    } else {
-      extension.handleKey(arg.text);
-    }
-  });
+  try {
+    vscode.commands.registerCommand("type", (arg) => {
+      if (extension.mode === Mode.Insert) {
+        vscode.commands.executeCommand("default:type", arg);
+      } else {
+        extension.handleKey(arg.text);
+      }
+    });
+  } catch (error) {
+    console.log("Could not register type command. Another extension must have already done so.");
+  }
 }
 
 // this method is called when your extension is deactivated

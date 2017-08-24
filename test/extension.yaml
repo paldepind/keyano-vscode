@@ -1,0 +1,19 @@
+# Cursor is denoted by |
+
+- describe: line
+  scenarios:
+  - it: selects the line at cursor
+    start: |
+      this is a line
+      horse mo|nkey fish
+      this is a another line
+    input: k
+    selection is: "horse monkey fish\n"
+        
+- describe: parentheses
+  scenarios:
+  - it: selects next parentheses
+    start: |
+      the|re is (a parenthesis)
+    input: p
+    selection is: (a parenthesis)
