@@ -4,13 +4,17 @@ type Range = {
 };
 
 export interface TextObject {
-  findNext(text: string, from: number): Range;
-  findPrev(text: string, from: number): Range;
-  expand(text: string, from: number, to: number): Range;
+  findNext(text: string, from: number): Range | undefined;
+  findPrev(text: string, from: number): Range | undefined;
+  expand(text: string, from: number, to: number): Range | undefined;
+  // matches(text: string): boolean;
+  // inside(text: string): Range;
 }
 
 export const line: TextObject = {
-  findPrev(text: string, from: number): Range {
+  // FIX ME: Return undefined when no change.
+
+  findPrev(text: string, from: number): Range | undefined {
     if (text[from - 1] === "\n") {
       // Selection starts at the beginning of line
       return {
@@ -24,7 +28,7 @@ export const line: TextObject = {
     return { start, end };
   },
 
-  findNext(text: string, from: number): Range {
+  findNext(text: string, from: number): Range | undefined {
     const start = text.lastIndexOf("\n", from) + 1;
     let end = text.indexOf("\n", from) + 1;
     if (end === 0) {
@@ -33,7 +37,7 @@ export const line: TextObject = {
     return { start, end };
   },
   
-  expand(text: string, from: number, to: number): Range {
+  expand(text: string, from: number, to: number): Range | undefined {
     // Fixes edge case when cursor is at the start of a line, with no selection made.
     if (from === to) {
       return this.findNext(text, from);
@@ -61,7 +65,7 @@ class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
   }
 
-  private findMatchingRight(text: string, origin: number, counter: number = 0) {
+  private findMatchingRight(text: string, origin: number, counter: number = 0): number {
     for (let i = origin; i < text.length; ++i) {
       if (text[i] === this.open) {
         ++counter;
@@ -76,7 +80,7 @@ class PairObject implements TextObject {
     return -1;
   }
 
-  private findMatchingLeft(text: string, origin: number, counter: number = 0) {
+  private findMatchingLeft(text: string, origin: number, counter: number = 0): number {
     for (let i = origin; i >= 0; --i) {
       if (text[i] === this.close) {
         ++counter;
@@ -91,7 +95,7 @@ class PairObject implements TextObject {
     return -1;
   }
 
-  private find(text, delimiter): Range | undefined {
+  private find(text: string, delimiter: number): Range | undefined {
     if (text[delimiter] === this.open) {
       const start = delimiter;
       const end = this.findMatchingRight(text, delimiter) + 1;
@@ -126,6 +130,7 @@ class PairObject implements TextObject {
   }
 
   expand(text: string, from: number, to: number): Range | undefined {
+    // FIX ME: Does not balance
     const end = this.findMatchingRight(text, to, 1) + 1;
     const start = this.findMatchingLeft(text, from - 1, 1);
 

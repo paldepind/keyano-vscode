@@ -23,14 +23,21 @@ export const selectNext: Command = {
       const { document } = editor;
       const text = document.getText();
       const from = document.offsetAt(editor.selection.end);
-      const { start, end } = obj.findNext(text, from);
-      const selection = new Selection(
-        document.positionAt(start),
-        document.positionAt(end)
-      );
-      editor.selection = selection;
 
-      return CommandResult.FINISHED;
+      const result = obj.findNext(text, from);
+      if (result) {
+        const { start, end } = result;
+        
+        if (start && end) {
+          const selection = new Selection(
+            document.positionAt(start),
+            document.positionAt(end)
+          );
+          editor.selection = selection;
+
+          return CommandResult.FINISHED;
+        }
+      }
     }
 
     return CommandResult.ERROR;
@@ -44,15 +51,58 @@ export const selectPrev: Command = {
       if (editor === undefined) {
         return;
       }
+
       const { document } = editor;
       const text = document.getText();
       const from = document.offsetAt(editor.selection.start);
-      const { start, end } = obj.findPrev(text, from);
-      const selection = new Selection(
-        document.positionAt(start),
-        document.positionAt(end)
-      );
-      editor.selection = selection;
+      const result = obj.findPrev(text, from);
+
+      if (result) {
+        const { start, end } = result;
+
+        if (start && end) {
+          const selection = new Selection(
+            document.positionAt(start),
+            document.positionAt(end)
+          );
+          editor.selection = selection;
+
+          return CommandResult.FINISHED;
+        }
+      }
+    }
+
+    return CommandResult.ERROR;
+  }
+}
+
+export const selectAll: Command = {
+  argument(main, char, obj) {
+    if (obj) {
+      const editor = window.activeTextEditor;
+      if (editor === undefined) {
+        return;
+      }
+      const { document } = editor;
+      const text = document.getText();
+
+      const selections = [];
+      let from = 0;
+      let result;
+      while (result = obj.findNext(text, from)) {
+        const { start, end } = result;
+
+        selections.push(new Selection(
+          document.positionAt(start),
+          document.positionAt(end)
+        ));
+
+        from = end;
+      }
+      
+      if (selections.length > 0) {
+        editor.selections = selections;
+      }
 
       return CommandResult.FINISHED;
     }
@@ -72,14 +122,21 @@ export const expand: Command = {
       const text = document.getText();
       const from = document.offsetAt(editor.selection.start);
       const to = document.offsetAt(editor.selection.end);
-      const { start, end } = obj.expand(text, from, to);
-      const selection = new Selection(
-        document.positionAt(start),
-        document.positionAt(end)
-      );
-      editor.selection = selection;
+      const result = obj.expand(text, from, to);
 
-      return CommandResult.FINISHED;
+      if (result) {
+        const { start, end } = result;
+
+        if (start && end) {
+          const selection = new Selection(
+            document.positionAt(start),
+            document.positionAt(end)
+          );
+          editor.selection = selection;
+
+          return CommandResult.FINISHED;
+        }
+      }
     }
 
     return CommandResult.ERROR;

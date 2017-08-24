@@ -3,7 +3,7 @@ import { window, Selection, workspace } from "vscode";
 import * as vscode from 'vscode';
 import { TextObject } from './textobjects';
 import * as textObjects from './textobjects';
-import { Command } from './commands';
+import { Command, selectAll } from './commands';
 import * as commands from './commands'
 import { Action } from './actions';
 import * as actions from './actions';
@@ -59,6 +59,7 @@ addBinding("i", [actions.enterInsertMode]);
 
 addBinding("<", [commands.selectPrev]);
 addBinding(">", [commands.selectNext]);
+addBinding("a", [commands.selectAll]);
 addBinding("e", [commands.expand]);
 
 addBinding("p", [textObjects.parenthesis]);
