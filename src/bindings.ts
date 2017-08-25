@@ -1,10 +1,12 @@
-import * as vscode from "vscode";
-import { window, Selection, workspace } from "vscode";
 import { Extension } from "./extension";
-import { parenthesis, line, word } from "./textobjects";
-
-import { repeater } from "./prefix";
-import { deleteSelections } from "./actions";
+import { window, Selection, workspace } from "vscode";
+import * as vscode from "vscode";
+import { TextObject } from "./textobjects";
+import * as textObjects from "./textobjects";
+import { Command, selectAll } from "./commands";
+import * as commands from "./commands";
+import { Action } from "./actions";
+import * as actions from "./actions";
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -48,140 +50,23 @@ function translateCharacter(char: string): string {
   }
 }
 
-export const bindings = new Map<string, (main: Extension) => Promise<void>>();
+export const bindings = new Map<string, Array<Command | Action | TextObject>>();
 
-export function addBinding(key: string, handler: (main: Extension) => Promise<void>): void {
-  bindings.set(translateCharacter(key), handler);
+export function addBinding(key: string, stack: Array<Command | Action | TextObject>): void {
+  bindings.set(translateCharacter(key), stack);
 }
 
-addBinding("i", async (main: Extension) => main.enterInsertMode());
+addBinding("i", [actions.enterInsertMode]);
+addBinding("x", [actions.deleteSelections]);
 
-addBinding("T", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
+addBinding("<", [commands.selectPrev]);
+addBinding(">", [commands.selectNext]);
+addBinding("a", [commands.selectAll]);
+addBinding("e", [commands.expand]);
 
-  const { document } = editor;
-  editor.edit((editBuilder: vscode.TextEditorEdit) => {
-    editBuilder.insert(new vscode.Position(0, 0), "fisk (taske (torsk (tanke) (mozarella) (hest) (hund) (diverse (dyr))))\n\"quote test\"");
-  });
-});
+addBinding("p", [textObjects.parenthesis]);
+addBinding("o", [textObjects.line]);
+addBinding("j", [textObjects.word]);
 
-addBinding("p", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.end);
-  const next = parenthesis.findNext(text, from);
-  if (next === undefined) {
-    return;
-  }
-  const { start, end } = next;
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("P", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const next = parenthesis.findPrev(text, from);
-  if (next === undefined) {
-    return;
-  }
-  const { start, end } = next;
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("e", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const to = document.offsetAt(editor.selection.end);
-  const next = parenthesis.expand(text, from, to);
-  if (next === undefined) {
-    return;
-  }
-  const { start, end } = next;
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("k", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.end);
-  const { start, end } = line.findNext(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("l", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const { start, end } = line.findPrev(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-addBinding("j", async (main: Extension) => {
-  const editor = window.activeTextEditor;
-  if (editor === undefined) {
-    return;
-  }
-  const { document } = editor;
-  const text = document.getText();
-  const from = document.offsetAt(editor.selection.start);
-  const { start, end } = word.findNext(text, from);
-  const selection = new Selection(
-    document.positionAt(start),
-    document.positionAt(end)
-  );
-  editor.selection = selection;
-});
-
-for (let i = 0; i < 10; ++i) {
-  addBinding(i.toString(), async (main: Extension) => {
-    repeater.apply(main);
-    repeater.argument(main, i.toString());
-  });
-}
-
-addBinding("x", deleteSelections);
+addBinding("k", [commands.selectNext, textObjects.line]);
+addBinding("l", [commands.selectPrev, textObjects.line]);
