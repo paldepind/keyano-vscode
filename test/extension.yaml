@@ -1,5 +1,7 @@
 # Cursor is denoted by |
 
+# Text objects
+
 - describe: line
   scenarios:
   - it: selects the line at cursor
@@ -9,6 +11,17 @@
       this is a another line
     input: k
     selection is: "horse monkey fish\n"
+
+- describe: word
+  scenarios:
+  - it: selects the word at cursor
+    start: this is a bu|nch of words
+    input: j
+    selection is: bunch
+  - it: selects first word in buffer
+    start: thi|s is a bunch of words
+    input: j
+    selection is: this
         
 - describe: parentheses
   scenarios:
@@ -17,3 +30,17 @@
       the|re is (a parenthesis)
     input: p
     selection is: (a parenthesis)
+
+# Actions
+
+- describe: delete
+  scenarios:
+  - it: deletes line
+    start: |
+      this is a line
+      horse mo|nkey fish
+      this is a another line
+    input: kx
+    text is: |
+      this is a line
+      this is a another line

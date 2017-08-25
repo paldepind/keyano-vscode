@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { window, StatusBarAlignment, StatusBarItem, workspace } from 'vscode';
-import { bindings } from './bindings';
-import { Command, CommandResult } from './commands';
-import * as commands from './commands';
-import { isTextObject, isCommand, isAction } from './utils';
-import { TextObject } from './textobjects';
+import { window, StatusBarAlignment, StatusBarItem, workspace } from "vscode";
+import { bindings } from "./bindings";
+import { Command, CommandResult } from "./commands";
+import * as commands from "./commands";
+import { isTextObject, isCommand, isAction } from "./utils";
+import { TextObject } from "./textobjects";
 
 enum Mode {
   Command,
@@ -43,22 +43,22 @@ export class Extension {
     }
   }
 
-  handleKey(char: string): void {
+  async handleKey(char: string): Promise<void> {
     const bindingStack = bindings.get(char);
 
     // Bound keypress
-    if (bindingStack) {
+    if (bindingStack !== undefined) {
       // Loop through items in stack
       const length = bindingStack.length;
       for (let i = 0; i < length; ++i) {
         const current = bindingStack[i];
-        
-        // Check if the callstack handles this.
+
+        // Check if the call-stack handles this.
         if (!this.runOnCommandStack(char, isTextObject(current) ? current : undefined)) {
           if (isCommand(current)) {
             this.commandStack.push(current);
           } else if (isAction(current)) {
-            current.execute(this);
+            await current.execute(this);
           } else if (isTextObject(current)) {
             commands.selectNext.argument(this, char, current);
           }
@@ -69,7 +69,7 @@ export class Extension {
     }
   }
 
-  // True if it was run on the callstack, false if not.
+  // True if it was run on the call-stack, false if not.
   private runOnCommandStack(char: string, obj: TextObject | undefined): boolean {
     const command = this.commandStack.pop();
 
@@ -86,7 +86,7 @@ export class Extension {
   }
 }
 
-function registerCommandDisposable(context) {
+function registerCommandDisposable(context: vscode.ExtensionContext) {
   return (commandId: string, run: (...args: any[]) => void): void => {
     const disposable = vscode.commands.registerCommand(commandId, run);
     context.subscriptions.push(disposable);

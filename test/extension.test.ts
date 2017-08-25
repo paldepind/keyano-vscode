@@ -41,6 +41,9 @@ export async function setupWorkspace(fileExtension: string = ""): Promise<void> 
 export async function setFileContent(text: string): Promise<vscode.TextEditor> {
   await setupWorkspace();
   const editor = window.activeTextEditor;
+  if (editor === undefined) {
+    throw new Error("No active editor");
+  }
   const { document } = editor;
   const selection = new Selection(document.positionAt(0), document.positionAt(Infinity));
   await editor.edit((builder) => {
@@ -54,7 +57,8 @@ type Scenario = {
   it: string,
   start: string,
   input: string,
-  "selection is"?: string
+  "selection is"?: string,
+  "text is"?: string
 };
 
 type Describe = {
@@ -78,10 +82,20 @@ for (const description of tests) {
         const cursorPosition = document.positionAt(scenario.start.indexOf("|"));
         editor.selection = new Selection(cursorPosition, cursorPosition);
         for (const char of scenario.input) {
-          extension.handleKey(char);
+          await extension.handleKey(char);
         }
+        // handle the asserts
         if (scenario["selection is"]) {
-          assert.strictEqual(document.getText(editor.selection), scenario["selection is"]);
+          assert.strictEqual(
+            document.getText(editor.selection),
+            scenario["selection is"]
+          );
+        }
+        if (scenario["text is"]) {
+          assert.strictEqual(
+            document.getText(),
+            scenario["text is"]
+          );
         }
       });
     }
