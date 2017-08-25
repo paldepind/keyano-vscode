@@ -58,6 +58,7 @@ type Scenario = {
   start: string,
   input: string,
   "selection is"?: string,
+  "selections are"?: string[],
   "text is"?: string
 };
 
@@ -85,13 +86,17 @@ for (const description of tests) {
           await extension.handleKey(char);
         }
         // handle the asserts
-        if (scenario["selection is"]) {
+        if (scenario["selection is"] !== undefined) {
           assert.strictEqual(
             document.getText(editor.selection),
             scenario["selection is"]
           );
         }
-        if (scenario["text is"]) {
+        if (scenario["selections are"] !== undefined) {
+          const actual = editor.selections.map((sel) => document.getText(sel));
+          assert.deepEqual(actual, scenario["selections are"]);
+        }
+        if (scenario["text is"] !== undefined) {
           assert.strictEqual(
             document.getText(),
             scenario["text is"]
