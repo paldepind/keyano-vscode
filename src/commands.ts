@@ -14,11 +14,11 @@ export interface Command {
 }
 
 export const selectNext: Command = {
-  argument(main: Extension, char: string, obj: TextObject | undefined) {
+  argument(main: Extension, char: string, obj: TextObject | undefined): CommandResult {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
-        return;
+        return CommandResult.ERROR;
       }
       const { document } = editor;
       const text = document.getText();
@@ -45,11 +45,11 @@ export const selectNext: Command = {
 }
 
 export const selectPrev: Command = {
-  argument(main: Extension, char: string, obj: TextObject | undefined) {
+  argument(main: Extension, char: string, obj: TextObject | undefined): CommandResult {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
-        return;
+        return CommandResult.ERROR;
       }
 
       const { document } = editor;
@@ -77,11 +77,11 @@ export const selectPrev: Command = {
 }
 
 export const selectAll: Command = {
-  argument(main: Extension, char: string, obj: TextObject | undefined) {
+  argument(main: Extension, char: string, obj: TextObject | undefined): CommandResult {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
-        return;
+        return CommandResult.ERROR;
       }
       const { document } = editor;
       const text = document.getText();
@@ -112,11 +112,11 @@ export const selectAll: Command = {
 }
 
 export const expand: Command = {
-  argument(main: Extension, char: string, obj: TextObject | undefined) {
+  argument(main: Extension, char: string, obj: TextObject | undefined): CommandResult {
     if (obj) {
       const editor = window.activeTextEditor;
       if (editor === undefined) {
-        return;
+        return CommandResult.ERROR;
       }
       const { document } = editor;
       const text = document.getText();
