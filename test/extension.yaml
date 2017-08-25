@@ -31,6 +31,16 @@
     input: p
     selection is: (a parenthesis)
 
+# Commands
+
+- describe: select-all
+  scenarios:
+  - it: selects all parenthesis
+    start: |
+      he|re (are) some (parenthesis) on (a) line
+    input: ap
+    selections are: ["(are)", "(parenthesis)", "(a)"]
+
 # Actions
 
 - describe: delete

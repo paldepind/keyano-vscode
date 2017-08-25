@@ -66,7 +66,7 @@ addBinding("e", [commands.expand]);
 
 addBinding("p", [textObjects.parenthesis]);
 addBinding("o", [textObjects.line]);
-addBinding("j", [textObjects.word]);
+addBinding("j", [commands.selectNext, textObjects.word]);
 
 addBinding("k", [commands.selectNext, textObjects.line]);
 addBinding("l", [commands.selectPrev, textObjects.line]);
