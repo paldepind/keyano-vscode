@@ -3,7 +3,6 @@ import { window, StatusBarAlignment, StatusBarItem, workspace } from "vscode";
 import { bindings } from "./bindings";
 import { Command, CommandResult } from "./commands";
 import * as commands from "./commands";
-import { isTextObject, isCommand, isAction } from "./utils";
 import { TextObject } from "./textobjects";
 
 enum Mode {
@@ -16,10 +15,9 @@ enum Mode {
 export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
-  commandStack: Array<Command>;
+  waitingCommand: Command | undefined;
 
   constructor() {
-    this.commandStack = [];
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
     this.enterCommandMode();
     this.statusBarItem.show();
@@ -44,45 +42,20 @@ export class Extension {
   }
 
   async handleKey(char: string): Promise<void> {
-    const bindingStack = bindings.get(char);
-
-    // Bound keypress
-    if (bindingStack !== undefined) {
-      // Loop through items in stack
-      const length = bindingStack.length;
-      for (let i = 0; i < length; ++i) {
-        const current = bindingStack[i];
-
-        // Check if the call-stack handles this.
-        if (!this.runOnCommandStack(char, isTextObject(current) ? current : undefined)) {
-          if (isCommand(current)) {
-            this.commandStack.push(current);
-          } else if (isAction(current)) {
-            await current.execute(this);
-          } else if (isTextObject(current)) {
-            commands.selectNext.argument(this, char, current);
-          }
-        }
+    if (this.waitingCommand !== undefined) {
+      const result = await this.waitingCommand.argument(this, char);
+      if (result !== CommandResult.Waiting) {
+        this.waitingCommand = undefined;
       }
     } else {
-      this.runOnCommandStack(char, undefined);
-    }
-  }
-
-  // True if it was run on the call-stack, false if not.
-  private runOnCommandStack(char: string, obj: TextObject | undefined): boolean {
-    const command = this.commandStack.pop();
-
-    if (command) {
-      const result = command.argument(this, char, obj);
-      if (result === CommandResult.WAITING) {
-        this.commandStack.push(command);
-      } else if (result === CommandResult.ERROR) {
-        this.commandStack = [];
+      const binding = bindings.get(char);
+      if (binding !== undefined) {
+        const result = await binding.argument(this, undefined);
+        if (result === CommandResult.Waiting) {
+          this.waitingCommand = binding;
+        }
       }
-      return true;
     }
-    return false;
   }
 }
 

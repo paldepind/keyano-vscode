@@ -16,7 +16,6 @@ class Repeater implements Prefix {
     if (!isNaN(parseInt(char, 10))) {
       this.count = this.count * 10 + parseInt(char, 10);
     } else {
-      main.prefix = undefined;
       for (let i = 0; i < this.count; ++i) {
         main.handleKey(char);
       }
@@ -25,7 +24,6 @@ class Repeater implements Prefix {
 
   apply(main: Extension) {
     this.count = 0;
-    main.prefix = this;
   }
 }
 
