@@ -1,4 +1,6 @@
-import { workspace } from "vscode";
+import { workspace, window, Selection } from "vscode";
+
+import { Command, CommandResult, selectTextObject } from "./commands";
 
 type Range = {
   start: number,
@@ -11,6 +13,23 @@ export interface TextObject {
   expand(text: string, from: number, to: number): Range | undefined;
   // matches(text: string): boolean;
   // inside(text: string): Range;
+}
+
+class TextObjectCommand implements Command {
+  type = "text-object";
+  constructor(public textObject: TextObject) { }
+  async argument(): Promise<CommandResult> {
+    selectTextObject(this.textObject, true);
+    return CommandResult.Finished;
+  }
+}
+
+export function isTextObjectCommand(c: Command): c is TextObjectCommand {
+  return c.type === "text-object";
+}
+
+export function textObjectToCommand(t: TextObject): Command {
+  return new TextObjectCommand(t);
 }
 
 // word
@@ -61,7 +80,7 @@ function getCharacterType(char: string): CharacterType {
   }
 }
 
-export const word: TextObject = {
+export const word = textObjectToCommand({
   findPrev() {
     return undefined; // FIXME: add find prev
   },
@@ -75,11 +94,11 @@ export const word: TextObject = {
     let start = findWhere(text, isWhitespace, from, -1) + 1;
     return { start, end };
   }
-};
+});
 
 // line
 
-export const line: TextObject = {
+export const line = textObjectToCommand({
   // FIX ME: Return undefined when no change.
 
   findPrev(text: string, from: number): Range | undefined {
@@ -127,7 +146,7 @@ export const line: TextObject = {
 
     return { start, end };
   }
-};
+});
 
 class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
@@ -173,7 +192,6 @@ class PairObject implements TextObject {
       const start = this.findMatchingLeft(text, end - 1);
       return { start, end };
     }
-
     return undefined;
   }
 
@@ -183,7 +201,6 @@ class PairObject implements TextObject {
         return this.find(text, delimiter);
       }
     }
-
     return undefined;
   }
 
@@ -193,7 +210,6 @@ class PairObject implements TextObject {
         return this.find(text, delimiter);
       }
     }
-
     return undefined;
   }
 
@@ -206,4 +222,4 @@ class PairObject implements TextObject {
   }
 }
 
-export const parenthesis = new PairObject("(", ")");
+export const parenthesis = textObjectToCommand(new PairObject("(", ")"));

@@ -50,23 +50,23 @@ function translateCharacter(char: string): string {
   }
 }
 
-export const bindings = new Map<string, Array<Command | Action | TextObject>>();
+export const bindings = new Map<string, Command>();
 
-export function addBinding(key: string, stack: Array<Command | Action | TextObject>): void {
+export function addBinding(key: string, stack: Command): void {
   bindings.set(translateCharacter(key), stack);
 }
 
-addBinding("i", [actions.enterInsertMode]);
-addBinding("x", [actions.deleteSelections]);
+addBinding("i", actions.enterInsertMode);
+addBinding("x", actions.deleteSelections);
 
-addBinding("<", [commands.selectPrev]);
-addBinding(">", [commands.selectNext]);
-addBinding("a", [commands.selectAll]);
-addBinding("e", [commands.expand]);
+addBinding("<", commands.selectPrev);
+addBinding(">", commands.selectNext);
+addBinding("a", commands.selectAll);
+addBinding("e", commands.expand);
 
-addBinding("p", [textObjects.parenthesis]);
-addBinding("o", [textObjects.line]);
-addBinding("j", [commands.selectNext, textObjects.word]);
+addBinding("p", textObjects.parenthesis);
+addBinding("o", textObjects.line);
+addBinding("j", textObjects.word);
 
-addBinding("k", [commands.selectNext, textObjects.line]);
-addBinding("l", [commands.selectPrev, textObjects.line]);
+addBinding("k", textObjects.line);
+// addBinding("l", commands.selectPrev, textObjects.line);
