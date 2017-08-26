@@ -22,6 +22,10 @@
     start: thi|s is a bunch of words
     input: j
     selection is: this
+  - it: expands out to entire word when part of the end is selected
+    start: this par[tly] selected
+    input: j
+    selection is: partly
         
 - describe: parentheses
   scenarios:

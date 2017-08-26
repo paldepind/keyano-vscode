@@ -78,10 +78,26 @@ for (const description of tests) {
   describe(description.describe, () => {
     for (const scenario of description.scenarios) {
       it(scenario.it, async () => {
-        const editor = await setFileContent(scenario.start.replace("|", ""));
+        const editor = await setFileContent(
+          scenario.start.replace("|", "").replace("[", "").replace("]", "")
+        );
         const { document } = editor;
-        const cursorPosition = document.positionAt(scenario.start.indexOf("|"));
-        editor.selection = new Selection(cursorPosition, cursorPosition);
+        // Handle pipe, currently only supports one
+        const cursorPosition = scenario.start.indexOf("|");
+        if (cursorPosition !== -1) {
+          editor.selection = new Selection(
+            document.positionAt(cursorPosition), document.positionAt(cursorPosition)
+          );
+        }
+        // Handle brackets, currently only supports a single pair
+        const openBracket = scenario.start.indexOf("[");
+        const closeBracket = scenario.start.indexOf("]");
+        if (openBracket !== -1 && closeBracket !== -1) {
+          editor.selection = new Selection(
+            document.positionAt(openBracket),
+            document.positionAt(closeBracket - 1)
+          );
+        }
         for (const char of scenario.input) {
           await extension.handleKey(char);
         }

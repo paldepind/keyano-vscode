@@ -21,14 +21,10 @@ export function selectTextObject(textObject: TextObject, next: boolean): void {
   }
   const { document } = editor;
   const text = document.getText();
-  let result;
-  if (next) {
-    const from = document.offsetAt(editor.selection.end);
-    result = textObject.findNext(text, from);
-  } else {
-    const from = document.offsetAt(editor.selection.start);
-    result = textObject.findPrev(text, from);
-  }
+  const from = document.offsetAt(editor.selection.start);
+  const to = document.offsetAt(editor.selection.end);
+  const result =
+    next ? textObject.findNext(text, from, to) : textObject.findPrev(text, from, to);
   if (result !== undefined) {
     const { start, end } = result;
     const selection = new Selection(
@@ -85,16 +81,16 @@ export const selectAll: Command = {
 
       const selections = [];
       let from = 0;
+      let to = 0;
       let result;
-      while (result = command.textObject.findNext(text, from)) {
+      while (result = command.textObject.findNext(text, from, to)) {
         const { start, end } = result;
-
         selections.push(new Selection(
           document.positionAt(start),
           document.positionAt(end)
         ));
-
-        from = end;
+        from = start;
+        to = end;
       }
       if (selections.length > 0) {
         editor.selections = selections;

@@ -8,8 +8,8 @@ type Range = {
 };
 
 export interface TextObject {
-  findNext(text: string, from: number): Range | undefined;
-  findPrev(text: string, from: number): Range | undefined;
+  findNext(text: string, from: number, to: number): Range | undefined;
+  findPrev(text: string, from: number, to: number): Range | undefined;
   expand(text: string, from: number, to: number): Range | undefined;
   // matches(text: string): boolean;
   // inside(text: string): Range;
@@ -84,7 +84,7 @@ export const word = textObjectToCommand({
   findPrev() {
     return undefined; // FIXME: add find prev
   },
-  findNext(text: string, from: number): Range {
+  findNext(text: string, from: number, to: number): Range {
     let end = findWhere(text, isWhitespace, from);
     let start = findWhere(text, isWhitespace, from, -1) + 1;
     return { start, end };
@@ -101,7 +101,7 @@ export const word = textObjectToCommand({
 export const line = textObjectToCommand({
   // FIX ME: Return undefined when no change.
 
-  findPrev(text: string, from: number): Range | undefined {
+  findPrev(text: string, from: number, to: number): Range | undefined {
     if (text[from - 1] === "\n") {
       // Selection starts at the beginning of line
       return {
@@ -115,9 +115,9 @@ export const line = textObjectToCommand({
     return { start, end };
   },
 
-  findNext(text: string, from: number): Range | undefined {
-    const start = text.lastIndexOf("\n", from) + 1;
-    let end = text.indexOf("\n", from) + 1;
+  findNext(text: string, from: number, to: number): Range | undefined {
+    const start = text.lastIndexOf("\n", to) + 1;
+    let end = text.indexOf("\n", to) + 1;
     if (end === 0) {
       end = text.length;
     }
@@ -127,7 +127,7 @@ export const line = textObjectToCommand({
   expand(text: string, from: number, to: number): Range | undefined {
     // Fixes edge case when cursor is at the start of a line, with no selection made.
     if (from === to) {
-      return this.findNext(text, from);
+      return this.findNext(text, from, to);
     }
 
     let end = text.indexOf("\n", to) + 1;
@@ -195,8 +195,8 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  findNext(text: string, from: number): Range | undefined {
-    for (let delimiter = from; delimiter < text.length; ++delimiter) {
+  findNext(text: string, from: number, to: number): Range | undefined {
+    for (let delimiter = to; delimiter < text.length; ++delimiter) {
       if (text[delimiter] === this.open || text[delimiter] === this.close) {
         return this.find(text, delimiter);
       }
@@ -204,7 +204,7 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  findPrev(text: string, from: number): Range | undefined {
+  findPrev(text: string, from: number, to: number): Range | undefined {
     for (let delimiter = from - 1; delimiter >= 0; --delimiter) {
       if (text[delimiter] === this.open || text[delimiter] === this.close) {
         return this.find(text, delimiter);
