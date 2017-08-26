@@ -65,8 +65,10 @@ addBinding("a", commands.selectAll);
 addBinding("e", commands.expand);
 
 addBinding("p", textObjects.parenthesis);
-addBinding("o", textObjects.line);
-addBinding("j", textObjects.word);
 
+// right hand homerow
+
+addBinding("j", textObjects.wordBackwards);
 addBinding("k", textObjects.line);
-// addBinding("l", commands.selectPrev, textObjects.line);
+addBinding("l", textObjects.lineBackwards);
+addBinding(";", textObjects.word);

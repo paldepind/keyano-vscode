@@ -11,21 +11,41 @@
       this is a another line
     input: k
     selection is: "horse monkey fish\n"
+  - it: moves backwards
+    start: |
+      first line
+      second line
+      third line
+      fourth| line
+    input: lll
+    selection is: "second line\n"
 
 - describe: word
   scenarios:
   - it: selects the word at cursor
     start: this is a bu|nch of words
-    input: j
+    input: ;
     selection is: bunch
   - it: selects first word in buffer
     start: thi|s is a bunch of words
-    input: j
+    input: ;
     selection is: this
   - it: expands out to entire word when part of the end is selected
     start: this par[tly] selected
-    input: j
+    input: ;
     selection is: partly
+  - it: moves forward
+    start: fir|st second third fourth
+    input: ;;;
+    selection is: third
+  - it: does not select punctuation when expanding on letter
+    start: foo .w|ord. bar
+    input: ;
+    selection is: word
+  - it: selects ford backwards
+    start: zeroth first second third fou|rth
+    input: jjjj
+    selection is: first
         
 - describe: parentheses
   scenarios:

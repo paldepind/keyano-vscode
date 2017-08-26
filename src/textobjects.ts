@@ -24,12 +24,19 @@ class TextObjectCommand implements Command {
   }
 }
 
-export function isTextObjectCommand(c: Command): c is TextObjectCommand {
-  return c.type === "text-object";
+export function textObjectToCommand(t: TextObject): TextObjectCommand {
+  return new TextObjectCommand(t);
 }
 
-export function textObjectToCommand(t: TextObject): Command {
-  return new TextObjectCommand(t);
+function reverse(c: TextObjectCommand): Command {
+  const newTextObject = Object.assign({}, c.textObject);
+  newTextObject.findNext = c.textObject.findPrev;
+  newTextObject.findPrev = c.textObject.findNext;
+  return new TextObjectCommand(newTextObject);
+}
+
+export function isTextObjectCommand(c: Command): c is TextObjectCommand {
+  return c.type === "text-object";
 }
 
 // word
@@ -64,7 +71,7 @@ function findWhere(
   direction: number = 1
 ): number {
   let i = from;
-  while (0 <= i && predicate(text[i]) === false) {
+  while (0 <= i && i < text.length && predicate(text[i]) === false) {
     i += direction;
   }
   return i;
@@ -80,21 +87,49 @@ function getCharacterType(char: string): CharacterType {
   }
 }
 
+function isWordChar(char: string): boolean {
+  return getCharacterType(char) === CharacterType.Word;  
+}
+
+function notWordChar(char: string): boolean {
+  return !isWordChar(char);
+}
+
 export const word = textObjectToCommand({
-  findPrev() {
-    return undefined; // FIXME: add find prev
+  findPrev(text: string, from: number, to: number) {
+    if (
+      (to !== text.length && isWordChar(text[to])) ||
+      (from !== 0 && isWordChar(text[from - 1]))
+    ) {
+      return this.expand(text, from, to);
+    }
+    let end = findWhere(
+      text, (char) => getCharacterType(char) === CharacterType.Word, from - 1, -1
+    ) + 1;
+    let start = findWhere(text, notWordChar, end - 1, -1) + 1;
+    return { start, end };
   },
-  findNext(text: string, from: number, to: number): Range {
-    let end = findWhere(text, isWhitespace, from);
-    let start = findWhere(text, isWhitespace, from, -1) + 1;
+  findNext(text: string, from: number, to: number) {
+    if (
+      (to !== text.length && isWordChar(text[to])) ||
+      (from !== 0 && isWordChar(text[from - 1]))
+    ) {
+      return this.expand(text, from, to);
+    }
+    let start = findWhere(
+      text, (char) => getCharacterType(char) === CharacterType.Word, to, 1
+    );
+    let end = findWhere(text, notWordChar, start, 1);
     return { start, end };
   },
   expand(text: string, from: number, to: number) {
-    let end = findWhere(text, isWhitespace, to);
-    let start = findWhere(text, isWhitespace, from, -1) + 1;
+    let end = findWhere(text, notWordChar, to);
+    let start = findWhere(text, notWordChar, from, -1) + 1;
     return { start, end };
   }
 });
+
+export const wordBackwards = reverse(word);
 
 // line
 
@@ -147,6 +182,8 @@ export const line = textObjectToCommand({
     return { start, end };
   }
 });
+
+export const lineBackwards = reverse(line);
 
 class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
