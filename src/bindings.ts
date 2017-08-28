@@ -52,8 +52,17 @@ export function addBinding(key: string, command: Command): void {
   bindings.set(translateCharacter(key), command);
 }
 
-addBinding("i", actions.enterInsertMode);
-addBinding("x", actions.deleteSelections);
+// the classic lower left setup
+
+addBinding("z", actions.undo);
+addBinding("x", actions.cut);
+addBinding("c", actions.copy);
+addBinding("v", actions.paste);
+
+// mode switching
+
+addBinding("i", actions.insertBefore);
+addBinding("o", actions.insertAfter);
 
 addBinding("p", flags.previous);
 addBinding("n", flags.next);

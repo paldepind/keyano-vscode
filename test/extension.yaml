@@ -59,6 +59,15 @@
 
 # Actions
 
+# uncomment when state is reset between tests
+# - describe: entering insert mode
+#   scenarios:
+#   - it: enters insert after selection
+#     start: |
+#       ther[e is a sele]ction
+#     input: ie
+#     text is: |
+#       theree is a selection
 - describe: delete
   scenarios:
   - it: deletes line

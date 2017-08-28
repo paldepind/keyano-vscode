@@ -3,7 +3,7 @@ import { Stack, Stackable, cons } from "./stack";
 export type Command = (stack: Stack, main: Extension) => Promise<[Stack, KeyHandler | undefined]>;
 
 export function pushToStack(element: Stackable): Command {
-  return async stack => [cons(element, stack), undefined];
+  return async (stack) => [cons(element, stack), undefined];
 }
 
 export function composeCommand(...commands: Command[]): Command {
