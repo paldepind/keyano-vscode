@@ -42,7 +42,7 @@
     start: foo .w|ord. bar
     input: ;
     selection is: word
-  - it: selects ford backwards
+  - it: selects word backwards
     start: zeroth first second third fou|rth
     input: jjjj
     selection is: first
@@ -52,7 +52,7 @@
   - it: selects next parentheses
     start: |
       the|re is (a parenthesis)
-    input: p
+    input: n(
     selection is: (a parenthesis)
 
 # Commands
@@ -62,7 +62,7 @@
   - it: selects all parenthesis
     start: |
       he|re (are) some (parenthesis) on (a) line
-    input: ap
+    input: a(
     selections are: ["(are)", "(parenthesis)", "(a)"]
 
 # Actions

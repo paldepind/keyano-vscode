@@ -1,13 +1,35 @@
 import * as vscode from "vscode";
-import { window, StatusBarAlignment, StatusBarItem, workspace } from "vscode";
+import { StatusBarItem, window, StatusBarAlignment } from "vscode";
+import { Stack, Stackable, cons } from "./stack";
 import { bindings } from "./bindings";
-import { Command, CommandResult } from "./commands";
-import * as commands from "./commands";
-import { TextObject } from "./textobjects";
 
 enum Mode {
   Command,
   Insert
+}
+
+export enum HandlerResult {
+  DECLINE,
+  AWAIT,
+  ACCEPT,
+  ERROR
+}
+export type KeyHandler = (char: string) => HandlerResult;
+
+export type Command = (stack: Stack, main: Extension) => Promise<[Stack, KeyHandler | undefined]>;
+
+export function pushToStack(element: Stackable): Command {
+  return async stack => [cons(element, stack), undefined];
+}
+
+export function composeCommand(...commands: Command[]): Command {
+  return async (stack: Stack, main: Extension) => {
+    let handler;
+    for (const command of commands) {
+      [stack, handler] = await command(stack, main);
+    }
+    return [stack, handler];
+  };
 }
 
 // This class encapsulates the global state and the methods on it. A
@@ -15,7 +37,8 @@ enum Mode {
 export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
-  waitingCommand: Command | undefined;
+  stack: Stack;
+  keyHandler: KeyHandler | undefined;
 
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
@@ -42,19 +65,23 @@ export class Extension {
   }
 
   async handleKey(char: string): Promise<void> {
-    if (this.waitingCommand !== undefined) {
-      const result = await this.waitingCommand.argument(this, char);
-      if (result !== CommandResult.Waiting) {
-        this.waitingCommand = undefined;
+    if (this.keyHandler !== undefined) {
+      const result = await this.keyHandler(char);
+      if (result === HandlerResult.AWAIT) {
+        return;
       }
-    } else {
-      const binding = bindings.get(char);
-      if (binding !== undefined) {
-        const result = await binding.argument(this, undefined);
-        if (result === CommandResult.Waiting) {
-          this.waitingCommand = binding;
-        }
+      this.keyHandler = undefined;
+      if (result === HandlerResult.ACCEPT) {
+        return;
+      } else if (result === HandlerResult.ERROR) {
+        this.stack = undefined;
+        return;
       }
+    }
+
+    const command = bindings.get(char);
+    if (command !== undefined) {
+      [this.stack, this.keyHandler] = await command(this.stack, this);
     }
   }
 }

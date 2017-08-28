@@ -1,12 +1,8 @@
-import { Extension } from "./extension";
-import { window, Selection, workspace } from "vscode";
-import * as vscode from "vscode";
-import { TextObject } from "./textobjects";
-import * as textObjects from "./textobjects";
-import { Command, selectAll } from "./commands";
-import * as commands from "./commands";
-import { Action } from "./actions";
+import { workspace } from "vscode";
+import { Command, composeCommand } from "./extension";
 import * as actions from "./actions";
+import * as textObjects from "./textobjects";
+import * as flags from "./flags";
 
 const configuration = workspace.getConfiguration("keyano");
 
@@ -52,24 +48,28 @@ function translateCharacter(char: string): string {
 
 export const bindings = new Map<string, Command>();
 
-export function addBinding(key: string, stack: Command): void {
-  bindings.set(translateCharacter(key), stack);
+export function addBinding(key: string, command: Command): void {
+  bindings.set(translateCharacter(key), command);
 }
 
 addBinding("i", actions.enterInsertMode);
 addBinding("x", actions.deleteSelections);
 
-addBinding("<", commands.selectPrev);
-addBinding(">", commands.selectNext);
-addBinding("a", commands.selectAll);
-addBinding("e", commands.expand);
-addBinding("n", commands.jumpAll);
+addBinding("p", flags.previous);
+addBinding("n", flags.next);
+addBinding("a", flags.all);
+addBinding("e", flags.expand);
+addBinding("f", flags.jump);
 
-addBinding("p", textObjects.parenthesis);
+addBinding("(", textObjects.parentheses);
+addBinding("{", textObjects.curlybrackets);
+addBinding("[", textObjects.brackets);
+addBinding("q", textObjects.line);
+addBinding("w", textObjects.word);
 
 // right hand homerow
 
-addBinding("j", textObjects.wordBackwards);
-addBinding("k", textObjects.line);
-addBinding("l", textObjects.lineBackwards);
-addBinding(";", textObjects.word);
+addBinding("j", composeCommand(flags.previous, textObjects.word));
+addBinding("k", composeCommand(flags.next, textObjects.line));
+addBinding("l", composeCommand(flags.previous, textObjects.line));
+addBinding(";", composeCommand(flags.next, textObjects.word));

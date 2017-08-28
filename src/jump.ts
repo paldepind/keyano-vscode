@@ -7,14 +7,14 @@ const plusMinusLines = 60;
 const numCharCodes = 26;
 
 function createCodeArray(): string[] {
-  const codeArray = new Array(numCharCodes * numCharCodes);
+  const arr = new Array(numCharCodes * numCharCodes);
   let codeIndex = 0;
   for (let i = 0; i < numCharCodes; i++) {
     for (let j = 0; j < numCharCodes; j++) {
-      codeArray[codeIndex++] = String.fromCharCode(97 + i) + String.fromCharCode(97 + j);
+      arr[codeIndex++] = String.fromCharCode(97 + i) + String.fromCharCode(97 + j);
     }
   }
-  return codeArray;
+  return arr;
 }
 
 let darkDataUriCache: { [index: string]: vscode.Uri } = {};
@@ -25,9 +25,9 @@ function getSvgDataUri(code: string, backgroundColor: string, fontColor: string)
   return vscode.Uri.parse(`data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 13" height="13" width="${width}"><rect width="${width}" height="13" rx="2" ry="2" style="fill: ${backgroundColor};"></rect><text font-family="Fira Mono" font-size="11px" fill="${fontColor}" x="1" y="10">${code}</text></svg>`);
 }
 
-function createDataUriCaches(codeArray: string[]) {
-  codeArray.forEach(code => darkDataUriCache[code] = getSvgDataUri(code, 'rgba(255, 255, 255, 0.6)', 'black'))
-  codeArray.forEach(code => lightDataUriCache[code] = getSvgDataUri(code, 'rgba(0, 0, 0, 0.6)', 'white'))
+function createDataUriCaches(codes: string[]) {
+  codes.forEach(code => darkDataUriCache[code] = getSvgDataUri(code, "rgba(255, 255, 255, 0.6)", "black"));
+  codes.forEach(code => lightDataUriCache[code] = getSvgDataUri(code, "rgba(0, 0, 0, 0.6)", "white"));
 }
 
 function getCodeIndex(code: string): number {
@@ -56,8 +56,8 @@ function createTextEditorDecorationType(charsToOffset: number) {
   return vscode.window.createTextEditorDecorationType({
     after: {
       margin: `-6px 0 0 ${charsToOffset * -7}px`,
-      height: '13px',
-      width: '14px'
+      height: "13px",
+      width: "14px"
     }
   });
 }
@@ -111,31 +111,32 @@ interface JumpyPosition {
 }
 
 interface JumpyFn {
-  (maxDecorations: number, firstLineNumber: number, lines: string[], regexp: RegExp): JumpyPosition[]
+  (maxDecorations: number, firstLineNumber: number, lines: string[], regexp: RegExp): JumpyPosition[];
 }
 
 function jumpyWord(maxDecorations: number, firstLineNumber: number, lines: string[], regexp: RegExp): JumpyPosition[] {
   let positionIndex = 0;
-  const positions: JumpyPosition[] = [];
+  const positionArray: JumpyPosition[] = [];
   for (let i = 0; i < lines.length && positionIndex < maxDecorations; i++) {
     let lineText = lines[i];
-    let word: RegExpExecArray;
-    while (!!(word = regexp.exec(lineText)) && positionIndex < maxDecorations) {
-      positions.push({ line: i + firstLineNumber, character: word.index, charOffset: 2 });
+    let word: RegExpExecArray | null = regexp.exec(lineText);
+    while (!!word && positionIndex < maxDecorations) {
+      positionArray.push({ line: i + firstLineNumber, character: word.index, charOffset: 2 });
+      word = regexp.exec(lineText);
     }
   }
-  return positions;
+  return positionArray;
 }
 
 function jumpyLine(maxDecorations: number, firstLineNumber: number, lines: string[], regexp: RegExp): JumpyPosition[] {
   let positionIndex = 0;
-  const positions: JumpyPosition[] = [];
+  const positionArray: JumpyPosition[] = [];
   for (let i = 0; i < lines.length && positionIndex < maxDecorations; i++) {
     if (!lines[i].match(regexp)) {
-      positions.push({ line: i + firstLineNumber, character: 0, charOffset: lines[i].length == 1 ? 1 : 2 });
+      positionArray.push({ line: i + firstLineNumber, character: 0, charOffset: lines[i].length === 1 ? 1 : 2 });
     }
   }
-  return positions;
+  return positionArray;
 }
 
 const codeArray = createCodeArray();
@@ -171,14 +172,11 @@ export function setTargets(textObject: TextObject): Target[] {
   const text = document.getText();
 
   const targets = [];
-  let from = 0;
-  let to = 0;
-  let result;
-  while (result = textObject.findNext(text, from, to)) {
+  let result = textObject.findNext(text, { start: 0, end: 0 });
+  while (result !== undefined) {
     const { start, end } = result;
     targets.push({ from: start, to: end, keys: codeArray[targets.length] });
-    from = start;
-    to = end;
+    result = textObject.findNext(text, result);
   }
 
   const decorations = targets.map(({ keys, from, to }, idx) =>
@@ -218,7 +216,7 @@ function notCalled(context: vscode.ExtensionContext) {
 
   function setJumpyMode(value: boolean) {
     isJumpyMode = value;
-    vscode.commands.executeCommand('setContext', 'jumpy.isJumpyMode', value);
+    vscode.commands.executeCommand("setContext", "jumpy.isJumpyMode", value);
   }
 
   function exitJumpyMode() {
@@ -228,9 +226,9 @@ function notCalled(context: vscode.ExtensionContext) {
     editor.setDecorations(decorationTypeOffset1, []);
   }
 
-  const jumpyTypeDisposable = vscode.commands.registerCommand('type', args => {
+  const jumpyTypeDisposable = vscode.commands.registerCommand("type", args => {
     if (!isJumpyMode) {
-      vscode.commands.executeCommand('default:type', args);
+      vscode.commands.executeCommand("default:type", args);
       return;
     }
 
@@ -262,7 +260,7 @@ function notCalled(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(jumpyTypeDisposable);
 
-  const exitJumpyModeDisposable = vscode.commands.registerCommand('extension.jumpy-exit', () => {
+  const exitJumpyModeDisposable = vscode.commands.registerCommand("extension.jumpy-exit", () => {
     exitJumpyMode();
   });
   context.subscriptions.push(exitJumpyModeDisposable);

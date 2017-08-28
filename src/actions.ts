@@ -1,31 +1,13 @@
-import { window, Selection, commands, workspace } from "vscode";
-import { Extension } from "./extension";
-import { CommandResult, Command } from "./commands";
+import { commands } from "vscode";
+import { Extension, Command } from "./extension";
+import { Stack } from "./stack";
 
-export interface Action {
-  execute(main: Extension): Promise<void>;
-}
+export const enterInsertMode: Command = async (stack: Stack, main: Extension) => {
+  main.enterInsertMode();
+  return [undefined, undefined];
+};
 
-function createAction(
-  name: string, execute: (main: Extension) => Promise<void>
-): Command {
-  return {
-    type: `action-${name}`,
-    async argument(main: Extension, char: string | undefined): Promise<CommandResult> {
-      await execute(main);
-      return CommandResult.Finished;
-    }
-  };
-}
-
-export const enterInsertMode = createAction(
-  "insert",
-  async (main: Extension) => main.enterInsertMode()
-);
-
-export const deleteSelections = createAction(
-  "delete",
-  async (main: Extension) => {
-    await commands.executeCommand("cut");
-  }
-);
+export const deleteSelections: Command = async (stack: Stack, main: Extension) => {
+  await commands.executeCommand("cut");
+  return [stack, undefined];
+};

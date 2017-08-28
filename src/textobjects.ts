@@ -1,45 +1,135 @@
-import { workspace, window, Selection } from "vscode";
-
-import { Command, CommandResult, selectTextObject } from "./commands";
+import { workspace, window, Selection, TextDocument } from "vscode";
+import { Command } from "./extension";
+import * as stackHelpers from "./stack";
+import { symbols, isDirection, isNumber } from "./flags";
+import * as jump from "./jump";
+import { HandlerResult } from "./extension";
 
 type Range = {
   start: number,
   end: number
 };
+export function rangeToSelection(document: TextDocument, range: Range): Selection {
+  return new Selection(
+    document.positionAt(range.start),
+    document.positionAt(range.end)
+  );
+}
+export function selectionToRange(document: TextDocument, selection: Selection): Range {
+  return { start: document.offsetAt(selection.start), end: document.offsetAt(selection.end) };
+}
 
 export interface TextObject {
-  findNext(text: string, from: number, to: number): Range | undefined;
-  findPrev(text: string, from: number, to: number): Range | undefined;
-  expand(text: string, from: number, to: number): Range | undefined;
+  findNext(text: string, range: Range): Range | undefined;
+  findPrev(text: string, range: Range): Range | undefined;
+  expand(text: string, range: Range): Range | undefined;
   // matches(text: string): boolean;
   // inside(text: string): Range;
 }
 
-class TextObjectCommand implements Command {
-  type = "text-object";
-  constructor(public textObject: TextObject) { }
-  async argument(): Promise<CommandResult> {
-    selectTextObject(this.textObject, true);
-    return CommandResult.Finished;
-  }
+// Do not touch source variable.
+function textObjectToCommand(source: TextObject): Command {
+  return async (stack) => {
+    if (window.activeTextEditor === undefined) {
+      return [undefined, undefined];
+    }
+    const editor = window.activeTextEditor;
+    // Give us a variable to play with.
+    let textObject = source;
+    const result = stackHelpers.matchSpecification(stack, element => {
+      // Fix so that we check for another symbol.jump after we received any symbol that is not jump...g
+      if (isNumber(element)) {
+        return HandlerResult.AWAIT;
+      } else if (isDirection(element)
+        || element === symbols.expand
+        || element === symbols.jump
+        || element === symbols.all) {
+        return HandlerResult.ACCEPT;
+      }
+      return HandlerResult.DECLINE;
+    });
+    stack = result[0];
+    const args = result[1];
+
+    let count = 1;
+    let action: symbol | undefined;
+    for (const element of args) {
+      if (isNumber(element)) {
+        count = element;
+      } else {
+        action = element;
+      }
+    }
+
+    const { document } = editor;
+    const text = document.getText();
+    const selection = selectionToRange(document, editor.selection);
+
+    switch (action) {
+      case symbols.previous:
+        textObject = reverse(textObject);
+      case symbols.next || undefined:
+        {
+          const range = textObject.findNext(text, selection);
+          if (range !== undefined) {
+            editor.selection = rangeToSelection(document, range);
+          }
+        }
+        break;
+      case symbols.jump:
+        {
+          const targets = jump.setTargets(textObject);
+          let keys = "";
+          return [stack, char => {
+            if (char.search(/[a-z]/i) === -1) {
+              return HandlerResult.ERROR;
+            }
+
+            keys = keys.concat(char);
+            if (keys.length < 2) {
+              return HandlerResult.AWAIT;
+            } else {
+              jump.goToTarget(keys, targets);
+              return HandlerResult.ACCEPT;
+            }
+          }];
+        }
+      case symbols.expand:
+        {
+          const range = textObject.expand(text, selection);
+          if (range !== undefined) {
+            editor.selection = rangeToSelection(document, range);
+          }
+        }
+        break;
+      case symbols.all:
+        {
+          const selections = [];
+          let range = textObject.findNext(text, { start: 0, end: 0 });
+          while (range !== undefined) {
+            selections.push(rangeToSelection(document, range));
+            range = textObject.findNext(text, range);
+          }
+
+          if (selections.length > 0) {
+            editor.selections = selections;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    return [stack, undefined];
+  };
 }
 
-export function textObjectToCommand(t: TextObject): TextObjectCommand {
-  return new TextObjectCommand(t);
+function reverse(textObject: TextObject): TextObject {
+  const newTextObject = Object.assign({}, textObject);
+  newTextObject.findNext = textObject.findPrev;
+  newTextObject.findPrev = textObject.findNext;
+  return newTextObject;
 }
-
-function reverse(c: TextObjectCommand): Command {
-  const newTextObject = Object.assign({}, c.textObject);
-  newTextObject.findNext = c.textObject.findPrev;
-  newTextObject.findPrev = c.textObject.findNext;
-  return new TextObjectCommand(newTextObject);
-}
-
-export function isTextObjectCommand(c: Command): c is TextObjectCommand {
-  return c.type === "text-object";
-}
-
-// word
 
 enum CharacterType {
   Whitespace,
@@ -88,7 +178,7 @@ function getCharacterType(char: string): CharacterType {
 }
 
 function isWordChar(char: string): boolean {
-  return getCharacterType(char) === CharacterType.Word;  
+  return getCharacterType(char) === CharacterType.Word;
 }
 
 function notWordChar(char: string): boolean {
@@ -96,94 +186,88 @@ function notWordChar(char: string): boolean {
 }
 
 export const word = textObjectToCommand({
-  findPrev(text: string, from: number, to: number) {
+  findPrev(text: string, range: Range) {
     if (
-      (to !== text.length && isWordChar(text[to])) ||
-      (from !== 0 && isWordChar(text[from - 1]))
+      (range.end !== text.length && isWordChar(text[range.end])) ||
+      (range.start !== 0 && isWordChar(text[range.start - 1]))
     ) {
-      return this.expand(text, from, to);
+      return this.expand(text, range);
     }
     let end = findWhere(
-      text, (char) => getCharacterType(char) === CharacterType.Word, from - 1, -1
+      text, (char) => getCharacterType(char) === CharacterType.Word, range.start - 1, -1
     ) + 1;
     let start = findWhere(text, notWordChar, end - 1, -1) + 1;
     return { start, end };
   },
-  findNext(text: string, from: number, to: number) {
+  findNext(text: string, range: Range) {
     if (
-      (to !== text.length && isWordChar(text[to])) ||
-      (from !== 0 && isWordChar(text[from - 1]))
+      (range.end !== text.length && isWordChar(text[range.end])) ||
+      (range.start !== 0 && isWordChar(text[range.start - 1]))
     ) {
-      return this.expand(text, from, to);
+      return this.expand(text, range);
     }
     let start = findWhere(
-      text, (char) => getCharacterType(char) === CharacterType.Word, to, 1
+      text, (char) => getCharacterType(char) === CharacterType.Word, range.end, 1
     );
     let end = findWhere(text, notWordChar, start, 1);
     return { start, end };
   },
-  expand(text: string, from: number, to: number) {
-    let end = findWhere(text, notWordChar, to);
-    let start = findWhere(text, notWordChar, from, -1) + 1;
+  expand(text: string, range: Range) {
+    let end = findWhere(text, notWordChar, range.end);
+    let start = findWhere(text, notWordChar, range.start, -1) + 1;
     return { start, end };
   }
 });
-
-export const wordBackwards = reverse(word);
-
-// line
 
 export const line = textObjectToCommand({
   // FIX ME: Return undefined when no change.
 
-  findPrev(text: string, from: number, to: number): Range | undefined {
-    if (text[from - 1] === "\n") {
+  findPrev(text: string, range: Range): Range | undefined {
+    if (text[range.start - 1] === "\n") {
       // Selection starts at the beginning of line
       return {
-        start: text.lastIndexOf("\n", from - 2) + 1,
-        end: from
+        start: text.lastIndexOf("\n", range.start - 2) + 1,
+        end: range.start
       };
     }
-    const start = text.lastIndexOf("\n", from) + 1;
-    const nextLineBreak = text.indexOf("\n", from + 1);
+    const start = text.lastIndexOf("\n", range.start) + 1;
+    const nextLineBreak = text.indexOf("\n", range.start + 1);
     const end = nextLineBreak === -1 ? text.length : nextLineBreak + 1;
     return { start, end };
   },
 
-  findNext(text: string, from: number, to: number): Range | undefined {
-    const start = text.lastIndexOf("\n", to) + 1;
-    let end = text.indexOf("\n", to) + 1;
+  findNext(text: string, range: Range): Range | undefined {
+    const start = text.lastIndexOf("\n", range.end) + 1;
+    let end = text.indexOf("\n", range.end) + 1;
     if (end === 0) {
       end = text.length;
     }
     return { start, end };
   },
 
-  expand(text: string, from: number, to: number): Range | undefined {
+  expand(text: string, range: Range): Range | undefined {
     // Fixes edge case when cursor is at the start of a line, with no selection made.
-    if (from === to) {
-      return this.findNext(text, from, to);
+    if (range.start === range.end) {
+      return this.findNext(text, range);
     }
 
-    let end = text.indexOf("\n", to) + 1;
+    let end = text.indexOf("\n", range.end) + 1;
     if (end === 0) {
       end = text.length;
     }
 
-    if (text[from - 1] === "\n") {
+    if (text[range.start - 1] === "\n") {
       // Selection starts at the beginning of line
       return {
-        start: text.lastIndexOf("\n", from - 2) + 1,
+        start: text.lastIndexOf("\n", range.start - 2) + 1,
         end: end
       };
     }
-    const start = text.lastIndexOf("\n", from) + 1;
+    const start = text.lastIndexOf("\n", range.start) + 1;
 
     return { start, end };
   }
 });
-
-export const lineBackwards = reverse(line);
 
 class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
@@ -232,8 +316,8 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  findNext(text: string, from: number, to: number): Range | undefined {
-    for (let delimiter = to; delimiter < text.length; ++delimiter) {
+  findNext(text: string, range: Range): Range | undefined {
+    for (let delimiter = range.end; delimiter < text.length; ++delimiter) {
       if (text[delimiter] === this.open || text[delimiter] === this.close) {
         return this.find(text, delimiter);
       }
@@ -241,8 +325,8 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  findPrev(text: string, from: number, to: number): Range | undefined {
-    for (let delimiter = from - 1; delimiter >= 0; --delimiter) {
+  findPrev(text: string, range: Range): Range | undefined {
+    for (let delimiter = range.start - 1; delimiter >= 0; --delimiter) {
       if (text[delimiter] === this.open || text[delimiter] === this.close) {
         return this.find(text, delimiter);
       }
@@ -250,13 +334,14 @@ class PairObject implements TextObject {
     return undefined;
   }
 
-  expand(text: string, from: number, to: number): Range | undefined {
+  expand(text: string, range: Range): Range | undefined {
     // FIX ME: Does not balance
-    const end = this.findMatchingRight(text, to, 1) + 1;
-    const start = this.findMatchingLeft(text, from - 1, 1);
+    const end = this.findMatchingRight(text, range.end, 1) + 1;
+    const start = this.findMatchingLeft(text, range.start - 1, 1);
 
     return start === -1 || end === 0 ? undefined : { start, end };
   }
 }
-
-export const parenthesis = textObjectToCommand(new PairObject("(", ")"));
+export const parentheses = textObjectToCommand(new PairObject("(", ")"));
+export const curlybrackets = textObjectToCommand(new PairObject("{", "}"));
+export const brackets = textObjectToCommand(new PairObject("[", "]"));
