@@ -22,30 +22,22 @@
 
 - describe: word
   scenarios:
-  - it: selects the word at cursor
+  - it: selects the word on next
     start: this is a bu|nch of words
     input: ;
     selection is: bunch
+  - it: selects the word on previous
+    start: this is a bu|nch of words
+    input: j
+    selection is: bunch
   - it: selects first word in buffer
-    start: thi|s is a bunch of words
+    start: \|this is a bunch of words
     input: ;
     selection is: this
   - it: expands out to entire word when part of the end is selected
     start: this par[tly] selected
     input: ;
     selection is: partly
-  - it: moves forward
-    start: fir|st second third fourth
-    input: ;;;
-    selection is: third
-  - it: does not select punctuation when expanding on letter
-    start: foo .w|ord. bar
-    input: ;
-    selection is: word
-  - it: selects word backwards
-    start: zeroth first second third fou|rth
-    input: jjjj
-    selection is: first
         
 - describe: parentheses
   scenarios:

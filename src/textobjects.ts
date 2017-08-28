@@ -1,9 +1,9 @@
 import { workspace, window, Selection, TextDocument } from "vscode";
-import { Command } from "./extension";
 import * as stackHelpers from "./stack";
 import { symbols, isDirection, isNumber } from "./flags";
 import * as jump from "./jump";
 import { HandlerResult } from "./extension";
+import { Command } from "./command";
 
 type Range = {
   start: number,
@@ -94,14 +94,6 @@ function textObjectToCommand(source: TextObject): Command {
             }
           }];
         }
-      case symbols.expand:
-        {
-          const range = textObject.expand(text, selection);
-          if (range !== undefined) {
-            editor.selection = rangeToSelection(document, range);
-          }
-        }
-        break;
       case symbols.all:
         {
           const selections = [];
@@ -113,6 +105,14 @@ function textObjectToCommand(source: TextObject): Command {
 
           if (selections.length > 0) {
             editor.selections = selections;
+          }
+        }
+        break;
+      case symbols.expand:
+        {
+          const range = textObject.expand(text, selection);
+          if (range !== undefined) {
+            editor.selection = rangeToSelection(document, range);
           }
         }
         break;
@@ -187,29 +187,22 @@ function notWordChar(char: string): boolean {
 
 export const word = textObjectToCommand({
   findPrev(text: string, range: Range) {
-    if (
-      (range.end !== text.length && isWordChar(text[range.end])) ||
-      (range.start !== 0 && isWordChar(text[range.start - 1]))
-    ) {
-      return this.expand(text, range);
-    }
-    let end = findWhere(
-      text, (char) => getCharacterType(char) === CharacterType.Word, range.start - 1, -1
+    const end = findWhere(
+      text,
+      (char) => getCharacterType(char) === CharacterType.Word,
+      range.start - 1,
+      -1
     ) + 1;
-    let start = findWhere(text, notWordChar, end - 1, -1) + 1;
+    const start = findWhere(text, notWordChar, end - 1, -1) + 1;
     return { start, end };
   },
   findNext(text: string, range: Range) {
-    if (
-      (range.end !== text.length && isWordChar(text[range.end])) ||
-      (range.start !== 0 && isWordChar(text[range.start - 1]))
-    ) {
-      return this.expand(text, range);
-    }
-    let start = findWhere(
-      text, (char) => getCharacterType(char) === CharacterType.Word, range.end, 1
+    const start = findWhere(text,
+      (char) => getCharacterType(char) === CharacterType.Word,
+      range.end,
+      1
     );
-    let end = findWhere(text, notWordChar, start, 1);
+    const end = findWhere(text, notWordChar, start, 1);
     return { start, end };
   },
   expand(text: string, range: Range) {

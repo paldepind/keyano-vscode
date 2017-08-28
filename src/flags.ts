@@ -1,5 +1,5 @@
 import { Stack } from "./stack";
-import { pushToStack } from "./extension";
+import { pushToStack } from "./command";
 
 export const symbols = {
   previous: Symbol.for("previous"),

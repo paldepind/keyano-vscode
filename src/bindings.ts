@@ -1,8 +1,8 @@
 import { workspace } from "vscode";
-import { Command, composeCommand } from "./extension";
 import * as actions from "./actions";
 import * as textObjects from "./textobjects";
 import * as flags from "./flags";
+import { composeCommand, Command } from "./command";
 
 const configuration = workspace.getConfiguration("keyano");
 

@@ -16,22 +16,6 @@ export enum HandlerResult {
 }
 export type KeyHandler = (char: string) => HandlerResult;
 
-export type Command = (stack: Stack, main: Extension) => Promise<[Stack, KeyHandler | undefined]>;
-
-export function pushToStack(element: Stackable): Command {
-  return async stack => [cons(element, stack), undefined];
-}
-
-export function composeCommand(...commands: Command[]): Command {
-  return async (stack: Stack, main: Extension) => {
-    let handler;
-    for (const command of commands) {
-      [stack, handler] = await command(stack, main);
-    }
-    return [stack, handler];
-  };
-}
-
 // This class encapsulates the global state and the methods on it. A
 // single instance is created when the extension is activated.
 export class Extension {
