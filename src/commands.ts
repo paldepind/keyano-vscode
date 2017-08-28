@@ -2,6 +2,7 @@ import { Extension } from "./extension";
 import { window, Selection, workspace } from "vscode";
 import { TextObject, isTextObjectCommand } from "./textobjects";
 import { bindings } from "./bindings";
+import { setTargets, goToTarget } from "./jump";
 
 export enum CommandResult {
   Error,
@@ -135,5 +136,34 @@ export const expand: Command = {
       }
     }
     return CommandResult.Error;
+  }
+};
+
+export const jumpAll = {
+  targets: undefined,
+  keys: "",
+  type: "jump-all",
+  async argument(main: Extension, char: string | undefined): Promise<CommandResult> {
+    if (char === undefined) {
+      return CommandResult.Waiting;
+    }
+    if (this.targets === undefined) {
+      const command = bindings.get(char);
+      if (command !== undefined && isTextObjectCommand(command)) {
+        this.targets = setTargets(command.textObject);
+        return CommandResult.Waiting;
+      } else {
+        return CommandResult.Error;
+      }
+    } else if (this.targets && this.keys.length === 0) {
+      this.keys = char;
+      return CommandResult.Waiting;
+    } else {
+      console.log("jumping", this.keys);
+      goToTarget(this.keys + char, this.targets);
+      this.keys = "";
+      this.targets = undefined;
+      return CommandResult.Finished;
+    }
   }
 };

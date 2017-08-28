@@ -63,6 +63,7 @@ addBinding("<", commands.selectPrev);
 addBinding(">", commands.selectNext);
 addBinding("a", commands.selectAll);
 addBinding("e", commands.expand);
+addBinding("n", commands.jumpAll);
 
 addBinding("p", textObjects.parenthesis);
 
