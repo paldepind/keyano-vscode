@@ -3,11 +3,8 @@ import * as path from "path";
 import * as os from "os";
 import * as yaml from "js-yaml";
 import * as assert from "assert";
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from "vscode";
-import { window, Selection, workspace, ConfigurationTarget } from "vscode";
+import { window, Selection, workspace } from "vscode";
 import { extension } from "../src/extension";
 
 function randomName() {
@@ -16,7 +13,6 @@ function randomName() {
 
 async function createRandomFile(contents: string): Promise<vscode.Uri> {
   const tmpFile = path.join(os.tmpdir(), randomName());
-
   try {
     fs.writeFileSync(tmpFile, contents);
     return vscode.Uri.file(tmpFile);
@@ -25,21 +21,21 @@ async function createRandomFile(contents: string): Promise<vscode.Uri> {
   }
 }
 
+let originalKeyboardLayout: string;
+
 export async function setupWorkspace(fileExtension: string = ""): Promise<void> {
   if (vscode.window.activeTextEditor === undefined) {
     // should only run once before the first test
     const file = await createRandomFile("");
     const doc = await vscode.workspace.openTextDocument(file);
     await vscode.window.showTextDocument(doc);
-    // await workspace.getConfiguration("keyano").update("keyboardLayout", "qwerty", ConfigurationTarget.Workspace);
   }
   assert.ok(vscode.window.activeTextEditor);
-
-  // always use qwerty in tests
 }
 
 export async function setFileContent(text: string): Promise<vscode.TextEditor> {
   await setupWorkspace();
+  extension.setLayout("qwerty");
   const editor = window.activeTextEditor;
   if (editor === undefined) {
     throw new Error("No active editor");

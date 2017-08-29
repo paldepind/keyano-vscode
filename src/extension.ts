@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { StatusBarItem, window, StatusBarAlignment } from "vscode";
+import { StatusBarItem, window, StatusBarAlignment, workspace } from "vscode";
 import { Stack, Stackable, cons } from "./stack";
-import { bindings } from "./bindings";
+import { getBindings, KeyboardLayout, Bindings } from "./bindings";
 
 enum Mode {
   Command,
@@ -14,6 +14,7 @@ export enum HandlerResult {
   ACCEPT,
   ERROR
 }
+
 export type KeyHandler = (char: string) => HandlerResult;
 
 // This class encapsulates the global state and the methods on it. A
@@ -22,6 +23,7 @@ export class Extension {
   statusBarItem: StatusBarItem;
   mode: Mode;
   stack: Stack;
+  bindings = getBindings("qwerty");
   keyHandler: KeyHandler | undefined;
 
   constructor() {
@@ -48,6 +50,10 @@ export class Extension {
     }
   }
 
+  setLayout(layout: KeyboardLayout) {
+    this.bindings = getBindings(layout);
+  }
+
   async handleKey(char: string): Promise<void> {
     if (this.keyHandler !== undefined) {
       const result = await this.keyHandler(char);
@@ -63,7 +69,7 @@ export class Extension {
       }
     }
 
-    const command = bindings.get(char);
+    const command = this.bindings.get(char);
     if (command !== undefined) {
       [this.stack, this.keyHandler] = await command(this.stack, this);
     }
@@ -82,6 +88,13 @@ export const extension = new Extension();
 // this function is called when the extension is activated
 export function activate(context: vscode.ExtensionContext) {
   const registerCommand = registerCommandDisposable(context);
+
+  // Load configured layout and watch for changes
+  extension.setLayout(workspace.getConfiguration("keyano").keyboardLayout);
+  workspace.onDidChangeConfiguration(() => {
+    const layout = workspace.getConfiguration("keyano").keyboardLayout;
+    extension.setLayout(layout);
+  });
 
   registerCommand("keyano.escape", () => {
     extension.enterCommandMode();

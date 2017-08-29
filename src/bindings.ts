@@ -1,10 +1,7 @@
-import { workspace } from "vscode";
 import * as actions from "./actions";
 import * as textObjects from "./textobjects";
 import * as flags from "./flags";
 import { composeCommand, Command } from "./command";
-
-const configuration = workspace.getConfiguration("keyano");
 
 const qwertyToColemak = new Map([
   ["q", "q"],
@@ -36,20 +33,34 @@ const qwertyToColemak = new Map([
   ["m", "m"]
 ]);
 
-function translateCharacter(char: string): string {
-  const layout = configuration.keyboardLayout;
-  if (layout === "colemak") {
-    const translated = qwertyToColemak.get(char);
-    return translated === undefined ? char : translated;
-  } else {
-    return char;
-  }
+export type Bindings = Map<string, Command>;
+
+const originalBindings: Bindings = new Map<string, Command>();
+
+function addBinding(key: string, command: Command): void {
+  originalBindings.set(key, command);
 }
 
-export const bindings = new Map<string, Command>();
+export type KeyboardLayout = "qwerty" | "colemak";
 
-export function addBinding(key: string, command: Command): void {
-  bindings.set(translateCharacter(key), command);
+function translateBindings(translations: Map<string, string>, bindings: Bindings) {
+  const translated = new Map();
+  for (const [key, command] of bindings) {
+    let newKey = translations.get(key);
+    if (newKey === undefined) {
+      newKey = key;
+    }
+    translated.set(newKey, command);
+  }
+  return translated;
+}
+
+export function getBindings(layout: KeyboardLayout): Bindings {
+  if (layout === "qwerty") {
+    return originalBindings;
+  } else {
+    return translateBindings(qwertyToColemak, originalBindings);
+  }
 }
 
 // the classic lower left setup
