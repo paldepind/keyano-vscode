@@ -1,4 +1,6 @@
-# keyano README
+[![Build Status](https://travis-ci.org/paldepind/keyano-vscode.svg?branch=master)](https://travis-ci.org/paldepind/keyano-vscode)
+
+# Keyano
 
 Edit code at the speed of light.
 
