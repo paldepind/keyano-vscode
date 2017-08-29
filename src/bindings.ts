@@ -70,9 +70,12 @@ addBinding("a", flags.all);
 addBinding("e", flags.expand);
 addBinding("f", flags.jump);
 
+// text objects
+
 addBinding("(", textObjects.parentheses);
 addBinding("{", textObjects.curlybrackets);
 addBinding("[", textObjects.brackets);
+addBinding("y", composeCommand(flags.next, textObjects.buffer));
 addBinding("q", textObjects.line);
 addBinding("w", textObjects.word);
 

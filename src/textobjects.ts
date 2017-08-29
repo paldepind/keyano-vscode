@@ -212,6 +212,18 @@ export const word = textObjectToCommand({
   }
 });
 
+function entireDocumentRange(text: string, { start, end }: Range): Range | undefined {
+  return start !== 0 || end !== text.length
+    ? { start: 0, end: text.length }
+    : undefined;
+}
+
+export const buffer = textObjectToCommand({
+  findPrev: entireDocumentRange,
+  findNext: entireDocumentRange,
+  expand: entireDocumentRange
+})
+
 export const line = textObjectToCommand({
   // FIX ME: Return undefined when no change.
 

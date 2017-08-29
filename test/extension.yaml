@@ -47,6 +47,19 @@
     input: n(
     selection is: (a parenthesis)
 
+- describe: buffer
+  scenarios:
+  - it: selects entire buffer
+    start: |
+      this is
+      a buffer full
+      of text
+    input: y
+    selection is: |
+      this is
+      a buffer full
+      of text
+
 # Commands
 
 - describe: select-all
