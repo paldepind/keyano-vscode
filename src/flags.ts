@@ -9,7 +9,9 @@ export const symbols = {
   all: Symbol.for("all")
 };
 
-export function isDirection(value?: any): boolean {
+export type Direction = symbol;
+
+export function isDirection(value?: any): value is Direction {
   return value === symbols.next || value === symbols.previous;
 }
 
