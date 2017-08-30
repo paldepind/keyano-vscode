@@ -36,36 +36,20 @@ function textObjectToCommand(source: TextObject): Command {
     const editor = window.activeTextEditor;
     // Give us a variable to play with.
     let textObject = source;
-    const result = stackHelpers.matchSpecification(stack, element => {
-      // Fix so that we check for another symbol.jump after we received any symbol that is not jump...g
-      if (isNumber(element)) {
-        return HandlerResult.AWAIT;
-      } else if (isDirection(element)
-        || element === symbols.expand
-        || element === symbols.jump
-        || element === symbols.all) {
-        return HandlerResult.ACCEPT;
-      }
-      return HandlerResult.DECLINE;
-    });
-    stack = result[0];
-    const args = result[1];
 
-    let count = 1;
-    let action: symbol | undefined;
-    for (const element of args) {
-      if (isNumber(element)) {
-        count = element;
-      } else {
-        action = element;
+    const { newStack, args: { direction } } = stackHelpers.readArgumentsFromStack(stack, {
+      direction: {
+        isType: isDirection,
+        defaultTo: symbols.next
       }
-    }
+    });
+    stack = newStack;
 
     const { document } = editor;
     const text = document.getText();
     const selection = selectionToRange(document, editor.selection);
 
-    switch (action) {
+    switch (direction) {
       case symbols.previous:
         textObject = reverse(textObject);
       case symbols.next || undefined:
@@ -222,7 +206,7 @@ export const buffer = textObjectToCommand({
   findPrev: entireDocumentRange,
   findNext: entireDocumentRange,
   expand: entireDocumentRange
-})
+});
 
 export const line = textObjectToCommand({
   // FIX ME: Return undefined when no change.

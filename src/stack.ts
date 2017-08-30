@@ -1,83 +1,57 @@
 import { HandlerResult } from "./extension";
 
-export type Stackable = symbol | number;
+export interface Stackable {
+  toString: () => string;
+}
+
 export type Stack = {
   head: Stackable,
   tail: Stack
 } | undefined;
 
-export type SpecificationPredicate = (element: Stackable) => HandlerResult;
-export type StackableHandler = (element: Stackable | undefined) => void;
+type Argument<A, B> = {
+  isType: (elm: any) => elm is A,
+  handler?: (elm: A) => B
+  defaultTo: B
+};
+
+type Specification = { [k: string]: Argument<any, any> };
+
+type Result<S extends Specification> = {
+  args: {
+    [K in keyof S]: S[K]["defaultTo"]
+  },
+  newStack: Stack
+};
+
+function id<A>(a: A): A {
+  return a;
+}
+
+export function readArgumentsFromStack<S extends Specification>(
+  stack: Stack, spec: S
+): Result<S> {
+  const args = Object.entries(spec).reduce((acc: any, [key, { defaultTo }]) => {
+    acc[key] = defaultTo;
+    return acc;
+  }, {});
+  while (stack !== undefined) {
+    const head = stack.head;
+    const match = Object.entries(spec).find(([key, { isType }]) => isType(head));
+    if (match !== undefined) {
+      const [key, { handler = id }] = match;
+      args[key] = handler(head);
+    } else {
+      break;
+    }
+    stack = stack.tail;
+  }
+  return {
+    args,
+    newStack: stack
+  };
+}
 
 export function cons(element: Stackable, stack: Stack) {
   return { head: element, tail: stack };
-}
-
-export function readDoCallback(
-  stack: Stack,
-  specification: SpecificationPredicate,
-  callback: StackableHandler
-): Stack {
-  while (stack !== undefined) {
-    const head = stack.head;
-    const result = specification(head);
-    if (result === HandlerResult.DECLINE) {
-      break;
-    } else if (result === HandlerResult.ERROR) {
-      callback(undefined);
-      return undefined;
-    }
-    stack = stack.tail;
-    callback(head);
-    if (result === HandlerResult.ACCEPT) {
-      break;
-    }
-  }
-  return stack;
-}
-
-export function readDoCallbacks(
-  stack: Stack,
-  specifications: [SpecificationPredicate, StackableHandler][]
-): Stack {
-  for (const [specification, callback] of specifications) {
-    if (stack === undefined) {
-      break;
-    }
-
-    const head = stack.head;
-    const result = specification(head);
-    if (result === HandlerResult.DECLINE) {
-      break;
-    } else if (result === HandlerResult.ERROR) {
-      callback(undefined);
-      return undefined;
-    }
-    stack = stack.tail;
-    callback(head);
-    if (result === HandlerResult.ACCEPT) {
-      break;
-    }
-  }
-  return stack;
-}
-
-export function matchSpecifications(
-  stack: Stack,
-  specifications: SpecificationPredicate[]
-): [Stack, (Stackable | undefined)[]] {
-  const args: (Stackable | undefined)[] = [];
-  stack = readDoCallbacks(stack, specifications.map(
-    predicate => [predicate, element => args.push(element)] as [SpecificationPredicate, StackableHandler]
-  ));
-  return [stack, args];
-}
-
-export function matchSpecification(
-  stack: Stack,
-  specification: SpecificationPredicate
-): [Stack, (Stackable | undefined)[]] {
-  const args: (Stackable | undefined)[] = [];
-  stack = readDoCallback(stack, specification, element => args.push(element));
-  return [stack, args];
 }

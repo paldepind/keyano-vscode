@@ -16,18 +16,33 @@ export enum HandlerResult {
 }
 export type KeyHandler = (char: string) => HandlerResult;
 
+function stackToString(stack: Stack): string {
+  let str = "";
+  while (stack !== undefined) {
+    str += " > " + stack.head.toString();
+    stack = stack.tail;
+  }
+  return str;
+}
+
 // This class encapsulates the global state and the methods on it. A
 // single instance is created when the extension is activated.
+
 export class Extension {
   statusBarItem: StatusBarItem;
+  statusBarStack: StatusBarItem;
   mode: Mode;
   stack: Stack;
   keyHandler: KeyHandler | undefined;
 
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
+    this.statusBarStack = window.createStatusBarItem(StatusBarAlignment.Left);
+    this.statusBarStack.text = "a > B > C";
+
     this.enterCommandMode();
     this.statusBarItem.show();
+    this.statusBarStack.show();
   }
 
   enterCommandMode() {
@@ -66,6 +81,7 @@ export class Extension {
     const command = bindings.get(char);
     if (command !== undefined) {
       [this.stack, this.keyHandler] = await command(this.stack, this);
+      this.statusBarStack.text = stackToString(this.stack);
     }
   }
 }
