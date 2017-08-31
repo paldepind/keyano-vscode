@@ -95,7 +95,7 @@ for (const description of tests) {
           );
         }
         for (const char of scenario.input) {
-          await extension.handleKey(char);
+          await extension.handleInput({ text: char });
         }
         // handle the asserts
         if (scenario["selection is"] !== undefined) {

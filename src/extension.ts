@@ -69,12 +69,12 @@ export class Extension {
     this.bindings = getBindings(layout);
   }
 
-  async handleKey(char: string): Promise<void> {
+  async handleInput(args: { text: string }): Promise<void> {
     if (this.mode === Mode.Insert) {
-      vscode.commands.executeCommand("default:type", char);
+      vscode.commands.executeCommand("default:type", args);
     } else {
       if (this.keyHandler !== undefined) {
-        const result = await this.keyHandler(char);
+        const result = await this.keyHandler(args.text);
         if (result === HandlerResult.AWAIT) {
           return;
         }
@@ -87,7 +87,7 @@ export class Extension {
         }
       }
 
-      const command = this.bindings.get(char);
+      const command = this.bindings.get(args.text);
       if (command !== undefined) {
         [this.stack, this.keyHandler] = await command(this.stack, this);
         this.statusBarStack.text = stackToString(this.stack);
@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   try {
     vscode.commands.registerCommand("type", (arg) => {
-      extension.handleKey(arg);
+      extension.handleInput(arg);
     });
   } catch (error) {
     console.log("Could not register type command. Another extension must have already done so.");
