@@ -40,7 +40,7 @@ export class Extension {
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
     this.statusBarStack = window.createStatusBarItem(StatusBarAlignment.Left);
-    this.statusBarStack.text = "a > B > C";
+    this.statusBarStack.text = ">";
 
     this.enterCommandMode();
     this.statusBarItem.show();

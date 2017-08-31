@@ -1,6 +1,6 @@
 import { workspace, window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
-import { symbols, isDirection, isNumber } from "./flags";
+import { symbols, isDirection, isNumber, isJump, isAll } from "./flags";
 import * as jump from "./jump";
 import { HandlerResult } from "./extension";
 import { Command } from "./command";
@@ -37,11 +37,12 @@ function textObjectToCommand(source: TextObject): Command {
     // Give us a variable to play with.
     let textObject = source;
 
-    const { newStack, args: { direction } } = stackHelpers.readArgumentsFromStack(stack, {
-      direction: {
-        isType: isDirection,
-        defaultTo: symbols.next
-      }
+    const {
+      newStack, args: { direction, shouldJump, selectAll }
+    } = stackHelpers.readArgumentsFromStack(stack, {
+      direction: { isType: isDirection, defaultTo: symbols.next },
+      shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
+      selectAll: { isType: isAll, defaultTo: false, handler: () => true }
     });
     stack = newStack;
 
@@ -52,46 +53,6 @@ function textObjectToCommand(source: TextObject): Command {
     switch (direction) {
       case symbols.previous:
         textObject = reverse(textObject);
-      case symbols.next || undefined:
-        {
-          const range = textObject.findNext(text, selection);
-          if (range !== undefined) {
-            editor.selection = rangeToSelection(document, range);
-          }
-        }
-        break;
-      case symbols.jump:
-        {
-          const targets = jump.setTargets(textObject);
-          let keys = "";
-          return [stack, char => {
-            if (char.search(/[a-z]/i) === -1) {
-              return HandlerResult.ERROR;
-            }
-
-            keys = keys.concat(char);
-            if (keys.length < 2) {
-              return HandlerResult.AWAIT;
-            } else {
-              jump.goToTarget(keys, targets);
-              return HandlerResult.ACCEPT;
-            }
-          }];
-        }
-      case symbols.all:
-        {
-          const selections = [];
-          let range = textObject.findNext(text, { start: 0, end: 0 });
-          while (range !== undefined) {
-            selections.push(rangeToSelection(document, range));
-            range = textObject.findNext(text, range);
-          }
-
-          if (selections.length > 0) {
-            editor.selections = selections;
-          }
-        }
-        break;
       case symbols.expand:
         {
           const range = textObject.expand(text, selection);
@@ -102,6 +63,40 @@ function textObjectToCommand(source: TextObject): Command {
         break;
       default:
         break;
+    }
+
+    if (shouldJump) {
+      const targets = jump.setTargets(textObject);
+      let keys = "";
+      return [stack, char => {
+        if (char.search(/[a-z]/i) === -1) {
+          return HandlerResult.ERROR;
+        }
+
+        keys = keys.concat(char);
+        if (keys.length < 2) {
+          return HandlerResult.AWAIT;
+        } else {
+          jump.goToTarget(keys, targets);
+          return HandlerResult.ACCEPT;
+        }
+      }];
+    } else if (selectAll) {
+      const selections = [];
+      let range = textObject.findNext(text, { start: 0, end: 0 });
+      while (range !== undefined) {
+        selections.push(rangeToSelection(document, range));
+        range = textObject.findNext(text, range);
+      }
+
+      if (selections.length > 0) {
+        editor.selections = selections;
+      }
+    } else {
+      const range = textObject.findNext(text, selection);
+      if (range !== undefined) {
+        editor.selection = rangeToSelection(document, range);
+      }
     }
 
     return [stack, undefined];
