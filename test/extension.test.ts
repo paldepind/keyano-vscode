@@ -66,7 +66,8 @@ function checkScenario(scenario: object) {
 
 type Describe = {
   describe: string,
-  scenarios: Scenario[]
+  scenarios?: Scenario[]
+  cases?: Describe[]
 };
 
 // VSCode compiles this TS file into a JS file in /out/test and the
@@ -75,52 +76,66 @@ const filePath = path.join(__dirname, "../../test/extension.yaml");
 
 const tests: Describe[] = yaml.safeLoad(fs.readFileSync(filePath, "utf8"));
 
-for (const description of tests) {
-  describe(description.describe, () => {
-    for (const scenario of description.scenarios) {
-      it(scenario.it, async () => {
-        checkScenario(scenario);
-        const editor = await setFileContent(
-          scenario.start.replace("|", "").replace("[", "").replace("]", "")
+function testScenarios(scenarios: Scenario[]): void {
+  for (const scenario of scenarios) {
+    it(scenario.it, async () => {
+      checkScenario(scenario);
+      const editor = await setFileContent(
+        scenario.start.replace("|", "").replace("[", "").replace("]", "")
+      );
+      const { document } = editor;
+      // Handle pipe, currently only supports one
+      const cursorPosition = scenario.start.indexOf("|");
+      if (cursorPosition !== -1) {
+        editor.selection = new Selection(
+          document.positionAt(cursorPosition), document.positionAt(cursorPosition)
         );
-        const { document } = editor;
-        // Handle pipe, currently only supports one
-        const cursorPosition = scenario.start.indexOf("|");
-        if (cursorPosition !== -1) {
-          editor.selection = new Selection(
-            document.positionAt(cursorPosition), document.positionAt(cursorPosition)
-          );
-        }
-        // Handle brackets, currently only supports a single pair
-        const openBracket = scenario.start.indexOf("[");
-        const closeBracket = scenario.start.indexOf("]");
-        if (openBracket !== -1 && closeBracket !== -1) {
-          editor.selection = new Selection(
-            document.positionAt(openBracket),
-            document.positionAt(closeBracket - 1)
-          );
-        }
-        for (const char of scenario.input) {
-          await extension.handleInput({ text: char });
-        }
-        // handle the asserts
-        if (scenario["selection is"] !== undefined) {
-          assert.strictEqual(
-            document.getText(editor.selection),
-            scenario["selection is"]
-          );
-        }
-        if (scenario["selections are"] !== undefined) {
-          const actual = editor.selections.map((sel) => document.getText(sel));
-          assert.deepEqual(actual, scenario["selections are"]);
-        }
-        if (scenario["text is"] !== undefined) {
-          assert.strictEqual(
-            document.getText(),
-            scenario["text is"]
-          );
-        }
-      });
-    }
-  });
+      }
+      // Handle brackets, currently only supports a single pair
+      const openBracket = scenario.start.indexOf("[");
+      const closeBracket = scenario.start.indexOf("]");
+      if (openBracket !== -1 && closeBracket !== -1) {
+        editor.selection = new Selection(
+          document.positionAt(openBracket),
+          document.positionAt(closeBracket - 1)
+        );
+      }
+      for (const char of scenario.input) {
+        await extension.handleInput({ text: char });
+      }
+      // handle the asserts
+      if (scenario["selection is"] !== undefined) {
+        assert.strictEqual(
+          document.getText(editor.selection),
+          scenario["selection is"]
+        );
+      }
+      if (scenario["selections are"] !== undefined) {
+        const actual = editor.selections.map((sel) => document.getText(sel));
+        assert.deepEqual(actual, scenario["selections are"]);
+      }
+      if (scenario["text is"] !== undefined) {
+        assert.strictEqual(
+          document.getText(),
+          scenario["text is"]
+        );
+      }
+    });
+  }
 }
+
+function doDescriptions(descriptions: Describe[]): void {
+  for (const description of descriptions) {
+    describe(description.describe, () => {
+      if (description.scenarios !== undefined) {
+        testScenarios(description.scenarios);
+      }
+
+      if (description.cases !== undefined) {
+        doDescriptions(description.cases);
+      }
+    })
+  }
+}
+
+doDescriptions(tests);
