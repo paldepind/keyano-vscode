@@ -52,7 +52,6 @@ function joinHandleSelection(selection: Selection) {
   }, [-1]).slice(1, -1);
   const newText = lines.join(" ");
   const edit = replaceText(selection, newText);
-  console.log("newText: ", newText);
   return { selection, offsets, edit };
 }
 

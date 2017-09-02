@@ -1,6 +1,6 @@
 import { window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
-import { symbols, isDirection, isNumber, isJump, isAll } from "./flags";
+import { directions, isDirection, isNumber, isJump, isAll, Direction, isExpand } from "./flags";
 import * as jump from "./jump";
 import { HandlerResult } from "./extension";
 import { Command } from "./command";
@@ -25,31 +25,21 @@ function textObjectToCommand(source: TextObject): Command {
     let textObject = source;
 
     const {
-      newStack, args: { direction, shouldJump, selectAll }
+      newStack, args: { direction, shouldJump, expand, selectAll }
     } = stackHelpers.readArgumentsFromStack(stack, {
-      direction: { isType: isDirection, defaultTo: symbols.next },
-      shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
-      selectAll: { isType: isAll, defaultTo: false, handler: () => true }
-    });
+        direction: { isType: isDirection, defaultTo: undefined }, // undefined = use findNext normally.
+        shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
+        expand: { isType: isExpand, defaultTo: false, handler: () => true },
+        selectAll: { isType: isAll, defaultTo: false, handler: () => true }
+      });
     stack = newStack;
 
     const { document } = editor;
     const text = document.getText();
     const selection = selectionToRange(document, editor.selection);
 
-    switch (direction) {
-      case symbols.previous:
-        textObject = reverse(textObject);
-      case symbols.expand:
-        {
-          const range = textObject.expand(text, selection);
-          if (range !== undefined) {
-            editor.selection = rangeToSelection(document, range);
-          }
-        }
-        break;
-      default:
-        break;
+    if (direction === directions.previous) {
+      textObject = reverse(textObject);
     }
 
     if (shouldJump) {
@@ -70,7 +60,8 @@ function textObjectToCommand(source: TextObject): Command {
       }];
     } else if (selectAll) {
       const selections = [];
-      let range = textObject.findNext(text, { start: 0, end: 0 });
+      const startRange = direction === undefined ? { start: 0, end: 0 } : selection;
+      let range = textObject.findNext(text, startRange);
       while (range !== undefined) {
         selections.push(rangeToSelection(document, range));
         range = textObject.findNext(text, range);
@@ -78,6 +69,11 @@ function textObjectToCommand(source: TextObject): Command {
 
       if (selections.length > 0) {
         editor.selections = selections;
+      }
+    } else if (expand) {
+      const range = textObject.expand(text, selection);
+      if (range !== undefined) {
+        editor.selection = rangeToSelection(document, range);
       }
     } else {
       const range = textObject.findNext(text, selection);
@@ -120,19 +116,6 @@ function isWordSeperator(char: string): boolean {
   return wordSeperators.has(char);
 }
 
-function findWhere(
-  text: string,
-  predicate: (char: string) => boolean,
-  from: number,
-  direction: number = 1
-): number {
-  let i = from;
-  while (0 <= i && i < text.length && predicate(text[i]) === false) {
-    i += direction;
-  }
-  return i;
-}
-
 function getCharacterType(char: string): CharacterType {
   if (isWhitespace(char)) {
     return CharacterType.Whitespace;
@@ -151,29 +134,102 @@ function notWordChar(char: string): boolean {
   return !isWordChar(char);
 }
 
+function findWhere(
+  text: string,
+  predicate: (char: string) => boolean,
+  from: number,
+  direction: number = 1
+): number {
+  let i = from;
+  while (i >= 0 && i < text.length) {
+    if (predicate(text[i])) {
+      return i;
+    }
+    i += direction;
+  }
+  return -1;
+}
+
+function findBorder(
+  text: string,
+  inside: (char: string) => boolean,
+  outside: (char: string) => boolean,
+  from: number,
+  direction: number = 1
+): number {
+  let i = from + direction;
+  while (i >= 0 && i < text.length) {
+    if ((i === 0 || i === text.length - 1) && inside(text[i])) {
+      return i;
+    } else if (outside(text[i]) && inside(text[i - direction])) {
+      return i - direction;
+    }
+    i += direction;
+  }
+  return -1;
+}
+
 export const word = textObjectToCommand({
-  findPrev(text: string, range: Range) {
-    const end = findWhere(
-      text,
-      (char) => getCharacterType(char) === CharacterType.Word,
-      range.start - 1,
-      -1
-    ) + 1;
-    const start = findWhere(text, notWordChar, end - 1, -1) + 1;
-    return { start, end };
-  },
   findNext(text: string, range: Range) {
-    const start = findWhere(text,
-      (char) => getCharacterType(char) === CharacterType.Word,
-      range.end,
-      1
-    );
-    const end = findWhere(text, notWordChar, start, 1);
+    let end = findWhere(text, isWordChar, range.end, 1) + 1;
+    if (end > 0) {
+      let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
+      end = endBorder > 0 ? endBorder : end;
+
+    }
+
+    let start = findWhere(text, notWordChar, end - 1, -1) + 1;
+    start = start >= 0 ? start : 0;
+
+    return start !== end ? { start, end: end } : undefined;
+  },
+
+  findPrev(text: string, range: Range) {
+    let start = findWhere(text, isWordChar, range.start - 1, -1);
+    if (start > 0) {
+      start = findBorder(text, isWordChar, notWordChar, start, -1);
+    } else if (start < 0) {
+      return undefined;
+    }
+
+    let end = findWhere(text, notWordChar, start + 1, 1);
+    end = end >= 0 ? end : text.length;
+
     return { start, end };
   },
+
   expand(text: string, range: Range) {
-    let end = findWhere(text, notWordChar, range.end);
-    let start = findWhere(text, notWordChar, range.start, -1) + 1;
+    let { start, end } = range;
+    let startBorder = findBorder(text, isWordChar, notWordChar, start, -1);
+    let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
+
+    if (start === startBorder && end === endBorder) {
+      startBorder = findWhere(text, isWordChar, start - 1, -1);
+      if (startBorder >= 0) {
+        start = findWhere(text, notWordChar, startBorder, -1) + 1;
+      }
+
+      endBorder = findWhere(text, isWordChar, end + 1, 1);
+      if (endBorder > 0) {
+        end = findWhere(text, notWordChar, endBorder, 1);
+        end = end >= 0 ? end : text.length;
+      }
+    } else if (end === endBorder && startBorder < 0) {
+      endBorder = findWhere(text, isWordChar, end + 1, 1);
+      if (endBorder > 0) {
+        end = findWhere(text, notWordChar, endBorder, 1);
+        end = end >= 0 ? end : text.length;
+      }
+    } else if (start === startBorder && endBorder <= 0) {
+      startBorder = findWhere(text, isWordChar, start - 1, -1);
+      if (startBorder >= 0) {
+        start = findWhere(text, notWordChar, startBorder, -1) + 1;
+      }
+    } else {
+      start = startBorder;
+      end = endBorder;
+    }
+
     return { start, end };
   }
 });

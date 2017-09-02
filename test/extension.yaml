@@ -1,97 +1,192 @@
 # Cursor is denoted by |
 
 # Text objects
-
-- describe: line
+- describe: Next word
   scenarios:
-  - it: selects the line at cursor
-    start: |
-      this is a line
-      horse mo|nkey fish
-      this is a another line
-    input: k
-    selection is: "horse monkey fish\n"
-  - it: moves backwards
-    start: |
-      first line
-      second line
-      third line
-      fourth| line
-    input: lll
-    selection is: "second line\n"
-
-- describe: word
-  scenarios:
-  - it: selects the word on next
-    start: this is a bu|nch of words
+  - it: selects the next word
+    start: "|foo"
     input: ;
-    selection is: bunch
-  - it: selects the word on previous
-    start: this is a bu|nch of words
+    selection is: foo
+  - it: selects the word it's inside, left
+    start: f|oo
+    input: ;
+    selection is: foo
+  - it: selects single char
+    start: "|a"
+    input: ;
+    selection is: a
+  - it: selects the word it's inside, right
+    start: fo|o
+    input: ;
+    selection is: foo
+  - it: selects next word from end
+    start: foo| bar
+    input: ;
+    selection is: bar
+  - it: selects nothing
+    start: foo bar|
+    input: ;
+    selection is: ""
+  - it: selects single letters, far
+    start: foo| a bar
+    input: ;
+    selection is: a
+  - it: selects single letters, close
+    start: foo |a bar
+    input: ;
+    selection is: a
+  - it: selects next word from selection's end
+    start: "[foo] bar"
+    input: ;
+    selection is: bar
+  - it: selects next word, when only end of current is selected
+    start: f[oo] bar
+    input: ;
+    selection is: bar
+  - it: expands selection when end of current word isn't covered
+    start: "[fo]o bar"
+    input: ;
+    selection is: foo
+  - it: selects second word, when partly covering two words
+    start: fo[o b]ar
+    input: ;
+    selection is: bar
+  - it: should not select word seperators
+    start: foo| !
+    input: ;
+    selection is: ""
+  - it: respects various seperators, =
+    start: "|foo=bar"
+    input: ;
+    selection is: foo
+  - it: respects various seperators, ==
+    start: foo|==bar
+    input: ;
+    selection is: bar
+  - it: respects various seperators, ~~
+    start: foo~|~bar
+    input: ;
+    selection is: bar
+  - it: should not clear selection on last word
+    start: foo [bar]
+    input: ;
+    selection is: bar
+- describe: Previous word
+  scenarios:
+  - it: selects word
+    start: foo|
     input: j
-    selection is: bunch
-  - it: selects first word in buffer
-    start: \|this is a bunch of words
-    input: ;
-    selection is: this
-  - it: expands out to entire word when part of the end is selected
-    start: this par[tly] selected
-    input: ;
-    selection is: partly
-        
-- describe: parentheses
+    selection is: foo
+  - it: selects single char
+    start: a|
+    input: j
+    selection is: a
+  - it: selects word its inside, right
+    start: fo|o
+    input: j
+    selection is: foo
+  - it: selects word its inside, left
+    start: f|oo
+    input: j
+    selection is: foo
+  - it: selects previous word when cursor at the beginning
+    start: foo |bar
+    input: j
+    selection is: foo
+  - it: selects nothing
+    start: "|foo"
+    input: j
+    selection is: ""
+  - it: selects single letter, far
+    start: foo b |baz
+    input: j
+    selection is: b
+  - it: selects single letter, close
+    start: foo b| baz
+    input: j
+    selection is: b
+  - it: should not select word seperators
+    start: "! |foo"
+    input: j
+    selection is: ""
+  - it: selects previous word from selection's start
+    start: foo [bar]
+    input: j
+    selection is: foo
+  - it: selects previous word when only start of current is selection
+    start: foo [ba]r
+    input: j
+    selection is: foo
+  - it: expands selection when start of current word isn't covered
+    start: foo b[ar]
+    input: j
+    selection is: bar
+  - it: selects first word when partly covering two words
+    start: fo[o b]ar
+    input: j
+    selection is: foo
+  - it: respects various seperators, =
+    start: foo=bar|
+    input: j
+    selection is: bar
+  - it: respects various seperators, ==
+    start: foo==|bar
+    input: j
+    selection is: foo
+  - it: respects various seperators, ~~
+    start: foo~|~bar
+    input: j
+    selection is: foo
+  - it: should not clear selection on last word
+    start: "[foo] bar"
+    input: j
+    selection is: foo
+- describe: Expand word
   scenarios:
-  - it: selects next parentheses
-    start: |
-      the|re is (a parenthesis)
-    input: n(
-    selection is: (a parenthesis)
-
-- describe: buffer
-  scenarios:
-  - it: selects entire buffer
-    start: |
-      this is
-      a buffer full
-      of text
-    input: y
-    selection is: |
-      this is
-      a buffer full
-      of text
-
-# Commands
-
-- describe: select-all
-  scenarios:
-  - it: selects all parenthesis
-    start: |
-      he|re (are) some (parenthesis) on (a) line
-    input: a(
-    selections are: ["(are)", "(parenthesis)", "(a)"]
-
-# Actions
-
-# uncomment when state is reset between tests
-# - describe: entering insert mode
-#   scenarios:
-#   - it: enters insert after selection
-#     start: |
-#       ther[e is a sele]ction
-#     input: ie
-#     text is: |
-#       theree is a selection
-- describe: delete
-  scenarios:
-  - it: deletes line
-    start: |
-      this is a line
-      horse mo|nkey fish
-      this is a another line
-    input: kx
-    text is: |
-      this is a line
-      this is a another line
+  - it: expands selection to word currently in
+    start: fo|o
+    input: ew
+    selection is: foo
+  - it: expands selection to word currently in, 3 words
+    start: foo ba|r baz
+    input: ew
+    selection is: bar
+  - it: expands selection to word currently touching, right
+    start: foo |bar
+    input: ew
+    selection is: bar
+  - it: expands selection to word currently touching, left
+    start: foo| bar
+    input: ew
+    selection is: foo
+  - it: expands selection to both words
+    start: (foo,| bar)
+    input: ew
+    selection is: foo, bar
+  - it: doesn't expand outside words
+    start: "! [foo bar] !"
+    input: ew
+    selection is: foo bar
+  - it: expands to word selection is covering
+    start: f[oo] bar
+    input: ew
+    selection is: foo
+  - it: expands to both words selection is covering
+    start: f[oo b]ar
+    input: ew
+    selection is: foo bar
+  - it: expands select words on both sides
+    start: foo [bar] baz
+    input: ew
+    selection is: foo bar baz
+  - it: expands to the sides it can, next
+    start: "[foo] bar baz"
+    input: ew
+    selection is: foo bar
+  - it: expands to the sides it can, previous
+    start: foo bar [baz]
+    input: ew
+    selection is: bar baz
 
 - describe: join
   scenarios:
@@ -99,7 +194,6 @@
     start: |
       wo[rd
       wo]rd
-      
     input: t
     text is: |
       word word

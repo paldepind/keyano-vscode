@@ -76,7 +76,6 @@ const filePath = path.join(__dirname, "../../test/extension.yaml");
 const tests: Describe[] = yaml.safeLoad(fs.readFileSync(filePath, "utf8"));
 
 for (const description of tests) {
-
   describe(description.describe, () => {
     for (const scenario of description.scenarios) {
       it(scenario.it, async () => {
