@@ -1,23 +1,10 @@
-import { workspace, window, Selection, TextDocument } from "vscode";
+import { window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
 import { symbols, isDirection, isNumber, isJump, isAll } from "./flags";
 import * as jump from "./jump";
 import { HandlerResult } from "./extension";
 import { Command } from "./command";
-
-type Range = {
-  start: number,
-  end: number
-};
-export function rangeToSelection(document: TextDocument, range: Range): Selection {
-  return new Selection(
-    document.positionAt(range.start),
-    document.positionAt(range.end)
-  );
-}
-export function selectionToRange(document: TextDocument, selection: Selection): Range {
-  return { start: document.offsetAt(selection.start), end: document.offsetAt(selection.end) };
-}
+import { rangeToSelection, selectionToRange, Range } from "./editor";
 
 export interface TextObject {
   findNext(text: string, range: Range): Range | undefined;

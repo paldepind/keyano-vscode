@@ -23,7 +23,7 @@ async function createRandomFile(contents: string): Promise<vscode.Uri> {
 
 let originalKeyboardLayout: string;
 
-export async function setupWorkspace(fileExtension: string = ""): Promise<void> {
+async function setupWorkspace(fileExtension: string = ""): Promise<void> {
   if (vscode.window.activeTextEditor === undefined) {
     // should only run once before the first test
     const file = await createRandomFile("");
@@ -33,7 +33,7 @@ export async function setupWorkspace(fileExtension: string = ""): Promise<void> 
   assert.ok(vscode.window.activeTextEditor);
 }
 
-export async function setFileContent(text: string): Promise<vscode.TextEditor> {
+async function setFileContent(text: string): Promise<vscode.TextEditor> {
   await setupWorkspace();
   extension.setLayout("qwerty");
   const editor = window.activeTextEditor;
@@ -58,6 +58,12 @@ type Scenario = {
   "text is"?: string
 };
 
+function checkScenario(scenario: object) {
+  if (!("input" in scenario)) {
+    throw new Error("Scenario misses input key");
+  }
+}
+
 type Describe = {
   describe: string,
   scenarios: Scenario[]
@@ -74,6 +80,7 @@ for (const description of tests) {
   describe(description.describe, () => {
     for (const scenario of description.scenarios) {
       it(scenario.it, async () => {
+        checkScenario(scenario);
         const editor = await setFileContent(
           scenario.start.replace("|", "").replace("[", "").replace("]", "")
         );

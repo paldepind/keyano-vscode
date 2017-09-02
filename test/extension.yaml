@@ -92,3 +92,30 @@
     text is: |
       this is a line
       this is a another line
+
+- describe: join
+  scenarios:
+  - it: joins lines
+    start: |
+      wo[rd
+      wo]rd
+      
+    input: t
+    text is: |
+      word word
+  - it: removes white space
+    start: |
+      te[xt
+        inde]nted
+    input: t
+    text is: |
+      text indented
+  - it: joins lines and selects spaces
+    start: |
+      fi[rst
+      second
+      thi]rd
+    input: T
+    text is: |
+      first second third
+    selections are: [" ", " "]

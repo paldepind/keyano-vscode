@@ -71,7 +71,7 @@ export class Extension {
 
   async handleInput(args: { text: string }): Promise<void> {
     if (this.mode === Mode.Insert) {
-      vscode.commands.executeCommand("default:type", args);
+      await vscode.commands.executeCommand("default:type", args);
     } else {
       if (this.keyHandler !== undefined) {
         const result = await this.keyHandler(args.text);

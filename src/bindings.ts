@@ -33,6 +33,10 @@ const qwertyToColemak = new Map([
   ["m", "m"]
 ]);
 
+for (const [from, to] of qwertyToColemak) {
+  qwertyToColemak.set(from.toUpperCase(), to.toUpperCase());
+}
+
 export type Bindings = Map<string, Command>;
 
 const originalBindings: Bindings = new Map<string, Command>();
@@ -69,6 +73,9 @@ addBinding("z", actions.undo);
 addBinding("x", actions.cut);
 addBinding("c", actions.copy);
 addBinding("v", actions.paste);
+
+addBinding("t", actions.join);
+addBinding("T", actions.joinSelect);
 
 // mode switching
 
