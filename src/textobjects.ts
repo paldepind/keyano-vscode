@@ -173,21 +173,22 @@ export const word = textObjectToCommand({
   findNext(text: string, { start, end }: Range) {
     end = findWhere(text, isWordChar, end, 1) + 1;
     if (end > 0) {
-      let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
-      end = endBorder > 0 ? endBorder : end;
-
+      end = findWhere(text, notWordChar, end - 1);
+      end = end >= 0 ? end : text.length;
+    } else {
+      return undefined;
     }
 
     start = findWhere(text, notWordChar, end - 1, -1) + 1;
     start = start >= 0 ? start : 0;
 
-    return start !== end ? { start, end: end } : undefined;
+    return { start, end: end };
   },
 
   findPrev(text: string, { start, end }: Range) {
     start = findWhere(text, isWordChar, start - 1, -1);
     if (start > 0) {
-      start = findBorder(text, isWordChar, notWordChar, start, -1);
+      start = findWhere(text, notWordChar, start, -1) + 1;
     } else if (start < 0) {
       return undefined;
     }
@@ -198,38 +199,33 @@ export const word = textObjectToCommand({
     return { start, end };
   },
 
-  expand(text: string, { start, end }: Range) {
-    let startBorder = findBorder(text, isWordChar, notWordChar, start, -1);
-    let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
-
-    if (start === startBorder && end === endBorder) {
-      startBorder = findWhere(text, isWordChar, start - 1, -1);
-      if (startBorder >= 0) {
-        start = findWhere(text, notWordChar, startBorder, -1) + 1;
-      }
-
-      endBorder = findWhere(text, isWordChar, end + 1, 1);
-      if (endBorder > 0) {
-        end = findWhere(text, notWordChar, endBorder, 1);
-        end = end >= 0 ? end : text.length;
-      }
-    } else if (end === endBorder && startBorder < 0) {
-      endBorder = findWhere(text, isWordChar, end + 1, 1);
-      if (endBorder > 0) {
-        end = findWhere(text, notWordChar, endBorder, 1);
-        end = end >= 0 ? end : text.length;
-      }
-    } else if (start === startBorder && endBorder <= 0) {
-      startBorder = findWhere(text, isWordChar, start - 1, -1);
-      if (startBorder >= 0) {
-        start = findWhere(text, notWordChar, startBorder, -1) + 1;
-      }
-    } else {
-      start = startBorder;
-      end = endBorder;
+  expand(text: string, range: Range) {
+    let start = findWhere(text, isWordChar, range.start, -1);
+    if (start > 0) {
+      start = findWhere(text, notWordChar, start, -1) + 1;
+    }
+    let end = findWhere(text, isWordChar, range.end - 1, 1) + 1;
+    if (end > 0) {
+      end = findWhere(text, notWordChar, end - 1);
+      end = end >= 0 ? end : text.length;
     }
 
-    return { start, end };
+    if (start === range.start && end === range.end) {
+      start = findWhere(text, isWordChar, range.start - 1, -1);
+      if (start > 0) {
+        start = findWhere(text, notWordChar, start, -1) + 1;
+      } else {
+        start = range.start;
+      }
+      end = findWhere(text, isWordChar, range.end, 1) + 1;
+      if (end > 0) {
+        end = findWhere(text, notWordChar, end - 1);
+        end = end >= 0 ? end : text.length;
+      } else {
+        end = range.end;
+      }
+    }
+    return start !== range.start || end !== range.end ? { start, end } : undefined;
   }
 });
 
