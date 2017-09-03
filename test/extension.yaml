@@ -438,7 +438,7 @@
         start: "|foo bar\" baz"
         input: n"
         selection is: ""
-      - it: selects nothing when no delimiter after
+      - it: does nothing when no delimiter after
         start: "\"foo\"|"
         input: n"
         selection is: ""
@@ -472,7 +472,7 @@
         start: "foo bar\" baz|"
         input: p"
         selection is: ""
-      - it: selects nothing when no delimiter before
+      - it: does nothing when no delimiter before
         start: "|\"foo\""
         input: p"
         selection is: ""
@@ -488,3 +488,37 @@
         start: "\"\" [\"foo\"]"
         input: p"
         selection is: "\"\""
+    - describe: "#expand()"
+      scenarios:
+      - it: selects delimiter infront and behind
+        start: "\"foo |bar\""
+        input: e"
+        selection is: "\"foo bar\""
+      - it: selects delimiter infront and behind
+        start: "fuz \"foo |bar\" baz"
+        input: e"
+        selection is: "\"foo bar\""
+      - it: does nothing when one side doesn't have a delimiter, right
+        start: "\"foo |bar"
+        input: e"
+        selection is: ""
+      - it: does nothing when one side doesn't have a delimiter, left
+        start: "foo |bar\""
+        input: e"
+        selection is: ""
+      - it: expands selection to next pair on either side
+        start: "\"foo [\"foo bar\"] bar\""
+        input: e"
+        selection is: "\"foo \"foo bar\" bar\""
+      - it: selects empty pair
+        start: "\"|\""
+        input: e"
+        selection is: "\"\""
+      - it: works for multi char delimiters
+        start: "```f|oo```"
+        input: e~
+        selection is: "```foo```"
+      - it: works for multi char delimiters, empty pair
+        start: "```|```"
+        input: e~
+        selection is: "``````"

@@ -284,7 +284,9 @@ class SingleDelimiter implements TextObject {
     return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
   }
   expand(text: string, range: Range): Range | undefined {
-    throw new Error("Method not implemented.");
+    let start = text.lastIndexOf(this.delimiter, range.start - this.delimiter.length);
+    let end = text.indexOf(this.delimiter, range.end) + this.delimiter.length;
+    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
   }
 }
 
