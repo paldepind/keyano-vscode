@@ -418,3 +418,31 @@
         start: "[bar]"
         input: eq
         selection is: bar
+- describe: single delimiter
+  cases:
+    - describe: "#findNext()"
+      scenarios:
+      - it: selects next pair from start of line
+        start: "|\"foo bar\""
+        input: n"
+        selection is: "\"foo bar\""
+      - it: selects next pair end of line
+        start: "foo| \"bar baz\""
+        input: n"
+        selection is: "\"bar baz\""
+      - it: selects next pair start of line
+        start: "|\"foo bar\" baz"
+        input: n"
+        selection is: "\"foo bar\""
+      - it: selects nothing when only 1 delimiter
+        start: "|foo bar\" baz"
+        input: n"
+        selection is: ""
+      - it: selects nothing when no delimiter after
+        start: "\"foo\"|"
+        input: n"
+        selection is: ""
+      - it: works for multi char delimiters
+        start: "|```foo```"
+        input: n~
+        selection is: "```foo```"

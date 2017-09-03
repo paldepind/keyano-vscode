@@ -96,6 +96,9 @@ addBinding("[", textObjects.brackets);
 addBinding("y", composeCommand(flags.next, textObjects.buffer));
 addBinding("q", textObjects.line);
 addBinding("w", textObjects.word);
+addBinding("\"", textObjects.quotes);
+addBinding("`", textObjects.tick);
+addBinding("~", textObjects.tripleTick);
 
 // right hand homerow
 

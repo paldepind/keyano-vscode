@@ -270,6 +270,26 @@ export const line = textObjectToCommand({
   }
 });
 
+class SingleDelimiter implements TextObject {
+  constructor(private delimiter: string) { }
+
+  findNext(text: string, range: Range): Range | undefined {
+    let start = text.indexOf(this.delimiter, range.start);
+    let end = text.indexOf(this.delimiter, start + this.delimiter.length) + this.delimiter.length;
+    return start >= 0 && end > start ? { start, end} : undefined;
+  }
+  findPrev(text: string, range: Range): Range | undefined {
+    throw new Error("Method not implemented.");
+  }
+  expand(text: string, range: Range): Range | undefined {
+    throw new Error("Method not implemented.");
+  }
+}
+
+export const quotes = textObjectToCommand(new SingleDelimiter("\""));
+export const tick = textObjectToCommand(new SingleDelimiter("`"));
+export const tripleTick = textObjectToCommand(new SingleDelimiter("```"));
+
 class PairObject implements TextObject {
   constructor(private open: string, private close: string) {
   }
