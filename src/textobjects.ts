@@ -274,12 +274,14 @@ class SingleDelimiter implements TextObject {
   constructor(private delimiter: string) { }
 
   findNext(text: string, range: Range): Range | undefined {
-    let start = text.indexOf(this.delimiter, range.start);
+    let start = text.indexOf(this.delimiter, range.end);
     let end = text.indexOf(this.delimiter, start + this.delimiter.length) + this.delimiter.length;
-    return start >= 0 && end > start ? { start, end} : undefined;
+    return start >= 0 && end > start ? { start, end } : undefined;
   }
   findPrev(text: string, range: Range): Range | undefined {
-    throw new Error("Method not implemented.");
+    let end = text.lastIndexOf(this.delimiter, range.start - 1) + this.delimiter.length;
+    let start = text.lastIndexOf(this.delimiter, end - this.delimiter.length - 1);
+    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
   }
   expand(text: string, range: Range): Range | undefined {
     throw new Error("Method not implemented.");

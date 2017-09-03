@@ -446,3 +446,45 @@
         start: "|```foo```"
         input: n~
         selection is: "```foo```"
+      - it: selects next pair from selection
+        start: "[\"foo bar\"] \"baz\""
+        input: n"
+        selection is: "\"baz\""
+      - it: selects empty pair
+        start: "[\"foo\"] \"\""
+        input: n"
+        selection is: "\"\""
+    - describe: "#findPrev()"
+      scenarios:
+      - it: selects previous pair from end of line
+        start: "\"foo bar\"|"
+        input: p"
+        selection is: "\"foo bar\""
+      - it: selects previous pair at end of line
+        start: "foo \"bar baz\"|"
+        input: p"
+        selection is: "\"bar baz\""
+      - it: selects previous pair at start of line
+        start: "\"foo bar\" |baz"
+        input: p"
+        selection is: "\"foo bar\""
+      - it: selects nothing when only 1 delimiter
+        start: "foo bar\" baz|"
+        input: p"
+        selection is: ""
+      - it: selects nothing when no delimiter before
+        start: "|\"foo\""
+        input: p"
+        selection is: ""
+      - it: works for multi char delimiters
+        start: "```foo```|"
+        input: p~
+        selection is: "```foo```"
+      - it: selects previous pair from selection
+        start: "\"foo bar\" [\"baz\"]"
+        input: p"
+        selection is: "\"foo bar\""
+      - it: selects empty pair
+        start: "\"\" [\"foo\"]"
+        input: p"
+        selection is: "\"\""
