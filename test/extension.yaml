@@ -190,6 +190,207 @@
       input: ew
       selection is: bar baz
 
+- describe: line
+  cases:
+    - describe: "#findNext()"
+      scenarios:
+      - it: selects current line when cursor on start
+        start: "|foo bar baz"
+        input: k
+        selection is: foo bar baz
+      - it: selects current line when cursor on start, two lines
+        start: |
+          |foo bar baz
+          bum biz buz
+        input: k
+        selection is: foo bar baz
+      - it: selects current line when cursor on start, middle line
+        start: |
+          foo bar
+          |baz
+          bum biz
+        input: k
+        selection is: baz
+      - it: selects current line when inside
+        start: |
+          foo bar
+          b|az
+          bum biz
+        input: k
+        selection is: baz
+      - it: selects line below, from the end
+        start: |
+          foo bar
+          baz|
+          bum biz
+        input: k
+        selection is: bum biz
+      - it: selects empty line
+        start: |
+          foo bar|
+
+          bum biz
+        input: k
+        selection is: ""
+      - it: selects partly covered line, when not covering end
+        start: |
+          [foo b]ar
+          bum biz
+        input: k
+        selection is: foo bar
+      - it: selects line below, when covering end
+        start: |
+          fo[o bar]
+          bum biz
+        input: k
+        selection is: bum biz
+      - it: selects line below, when covering line
+        start: |
+          [foo bar]
+          bum biz
+        input: k
+        selection is: bum biz
+      - it: doesn't clear selection
+        start: |
+          foo bar
+          [bum biz]
+        input: k
+        selection is: bum biz
+    - describe: "#findPrev()"
+      scenarios:
+      - it: selects current line when cursor on end
+        start: foo bar baz|
+        input: l
+        selection is: foo bar baz
+      - it: selects current line when cursor on end, two lines
+        start: |
+          foo bar 
+          biz baz|
+        input: l
+        selection is: biz baz
+      - it: selects current line when cursor on end, two lines
+        start: |
+          foo bar 
+          biz|
+          baz
+        input: l
+        selection is: biz
+      - it: selects current line when inside
+        start: |
+          foo
+          ba|r
+          baz
+        input: l
+        selection is: bar
+      - it: selects line above, when at start
+        start: |
+          foo
+          |bar
+          baz
+        input: l
+        selection is: foo
+      - it: selects empty line
+        start: |
+          foo bar
+
+          |bum biz
+        input: l
+        selection is: ""
+      - it: selects partly covered line, when not covering start
+        start: |
+          foo bar
+          bu[m biz]
+        input: l
+        selection is: bum biz
+      - it: selects line above, when covering start
+        start: |
+          foo bar
+          [bum b]iz
+        input: l
+        selection is: foo bar
+      - it: selects line above, when covering line
+        start: |
+          foo bar
+          [bum biz]
+        input: l
+        selection is: foo bar
+      - it: doesn't clear selection
+        start: |
+          [foo bar]
+          bum biz
+        input: l
+        selection is: foo bar
+    - describe: "#expand()"
+      scenarios:
+      - it: selects line currently inside
+        start: foo |bar
+        input: eq
+        selection is: foo bar
+      - it: selects line currently inside, first line
+        start: |
+          foo |bar
+          baz
+        input: eq
+        selection is: foo bar
+      - it: selects line currently inside, middle line
+        start: |
+          bum
+          foo |bar
+          baz
+        input: eq
+        selection is: foo bar
+      - it: selects line currently on, left
+        start: |
+          foo
+          |bar
+          baz
+        input: eq
+        selection is: bar
+      - it: selects line currently on, right
+        start: |
+          foo
+          bar|
+          baz
+        input: eq
+        selection is: bar
+      - it: selects line currently on, cover end
+        start: |
+          foo
+          b[ar]
+          baz
+        input: eq
+        selection is: bar
+      - it: selects line currently on, cover start
+        start: |
+          foo
+          [ba]r
+          baz
+        input: eq
+        selection is: bar
+      - it: selects lines above and below
+        start: |
+          foo
+          [bar]
+          baz
+        input: eq
+        selection is: "foo\nbar\nbaz"
+      - it: selects lines above, with none below
+        start: |
+          foo
+          [bar]
+        input: eq
+        selection is: "foo\nbar"
+      - it: selects lines below, with none above
+        start: |
+          [bar]
+          baz
+        input: eq
+        selection is: "bar\nbaz"
+      - it: returns undefined
+        start: "[bar]"
+        input: eq
+        selection is: bar
+
 - describe: join
   scenarios:
   - it: joins lines

@@ -170,36 +170,35 @@ function findBorder(
 }
 
 export const word = textObjectToCommand({
-  findNext(text: string, range: Range) {
-    let end = findWhere(text, isWordChar, range.end, 1) + 1;
+  findNext(text: string, { start, end }: Range) {
+    end = findWhere(text, isWordChar, end, 1) + 1;
     if (end > 0) {
       let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
       end = endBorder > 0 ? endBorder : end;
 
     }
 
-    let start = findWhere(text, notWordChar, end - 1, -1) + 1;
+    start = findWhere(text, notWordChar, end - 1, -1) + 1;
     start = start >= 0 ? start : 0;
 
     return start !== end ? { start, end: end } : undefined;
   },
 
-  findPrev(text: string, range: Range) {
-    let start = findWhere(text, isWordChar, range.start - 1, -1);
+  findPrev(text: string, { start, end }: Range) {
+    start = findWhere(text, isWordChar, start - 1, -1);
     if (start > 0) {
       start = findBorder(text, isWordChar, notWordChar, start, -1);
     } else if (start < 0) {
       return undefined;
     }
 
-    let end = findWhere(text, notWordChar, start + 1, 1);
+    end = findWhere(text, notWordChar, start + 1, 1);
     end = end >= 0 ? end : text.length;
 
     return { start, end };
   },
 
-  expand(text: string, range: Range) {
-    let { start, end } = range;
+  expand(text: string, { start, end }: Range) {
     let startBorder = findBorder(text, isWordChar, notWordChar, start, -1);
     let endBorder = findBorder(text, isWordChar, notWordChar, end - 1, 1) + 1;
 
@@ -247,52 +246,31 @@ export const buffer = textObjectToCommand({
 });
 
 export const line = textObjectToCommand({
-  // FIX ME: Return undefined when no change.
+  findNext(text: string, range: Range): Range | undefined {
+    let end = text.indexOf("\n", range.end + 1);
+    end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
+    let start = text.lastIndexOf("\n", end - 1) + 1;
 
-  findPrev(text: string, range: Range): Range | undefined {
-    if (text[range.start - 1] === "\n") {
-      // Selection starts at the beginning of line
-      return {
-        start: text.lastIndexOf("\n", range.start - 2) + 1,
-        end: range.start
-      };
-    }
-    const start = text.lastIndexOf("\n", range.start) + 1;
-    const nextLineBreak = text.indexOf("\n", range.start + 1);
-    const end = nextLineBreak === -1 ? text.length : nextLineBreak + 1;
-    return { start, end };
+    return start !== range.start || end !== range.end ? { start, end } : undefined;
   },
 
-  findNext(text: string, range: Range): Range | undefined {
-    const start = text.lastIndexOf("\n", range.end) + 1;
-    let end = text.indexOf("\n", range.end) + 1;
-    if (end === 0) {
-      end = text.length;
-    }
-    return { start, end };
+  findPrev(text: string, range: Range): Range | undefined {
+    const start = text.lastIndexOf("\n", range.start - 2) + 1;
+    let end = text.indexOf("\n", start);
+    end = end >= 0 ? end : text.length;
+    return start !== range.start || end !== range.end ? { start, end } : undefined;
   },
 
   expand(text: string, range: Range): Range | undefined {
-    // Fixes edge case when cursor is at the start of a line, with no selection made.
-    if (range.start === range.end) {
-      return this.findNext(text, range);
+    let start = text.lastIndexOf("\n", range.start - 1) + 1;
+    let end = text.indexOf("\n", range.end);
+    end = end >= 0 ? end : text.length;
+    if (start === range.start && end === range.end) {
+      start = text.lastIndexOf("\n", start - 2) + 1;
+      end = text.indexOf("\n", end + 1);
+      end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
     }
-
-    let end = text.indexOf("\n", range.end) + 1;
-    if (end === 0) {
-      end = text.length;
-    }
-
-    if (text[range.start - 1] === "\n") {
-      // Selection starts at the beginning of line
-      return {
-        start: text.lastIndexOf("\n", range.start - 2) + 1,
-        end: end
-      };
-    }
-    const start = text.lastIndexOf("\n", range.start) + 1;
-
-    return { start, end };
+    return start !== range.start || end !== range.end ? { start, end } : undefined;
   }
 });
 
