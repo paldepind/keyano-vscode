@@ -138,7 +138,7 @@ function findWhere(
   text: string,
   predicate: (char: string) => boolean,
   from: number,
-  direction: number = 1
+  direction: 1 | -1 = 1
 ): number {
   let i = from;
   while (i >= 0 && i < text.length) {
@@ -155,7 +155,7 @@ function findBorder(
   inside: (char: string) => boolean,
   outside: (char: string) => boolean,
   from: number,
-  direction: number = 1
+  direction: 1 | -1 = 1
 ): number {
   let i = from + direction;
   while (i >= 0 && i < text.length) {
@@ -294,79 +294,67 @@ export const quotes = textObjectToCommand(new SingleDelimiter("\""));
 export const tick = textObjectToCommand(new SingleDelimiter("`"));
 export const tripleTick = textObjectToCommand(new SingleDelimiter("```"));
 
-class PairObject implements TextObject {
+class PairedDelimiter implements TextObject {
   constructor(private open: string, private close: string) {
+    if (this.open === this.close
+      && this.open.indexOf(this.close) === -1
+      && this.close.indexOf(this.open) === -1) {
+      throw new Error("Open and close delimiters can not be identical, nor contain eachother! " + this.open + " === " + this.close);
+    }
   }
 
-  private findMatchingRight(text: string, origin: number, counter: number = 0): number {
-    for (let i = origin; i < text.length; ++i) {
-      if (text[i] === this.open) {
-        ++counter;
-      } else if (text[i] === this.close) {
-        --counter;
-        if (counter === 0) {
-          return i;
-        }
+  private findNextDelimiter(text: string, from: number, direction: 1 | -1): { index: number, delimiter: string } {
+    while (from >= 0 && from < text.length) {
+      if (text.substr(from, this.open.length) === this.open) {
+        return { index: from, delimiter: this.open };
+      } else if (text.substr(from, this.close.length) === this.close) {
+        return { index: from, delimiter: this.close };
       }
+      from += direction;
     }
-
-    return -1;
+    return { index: -1, delimiter: "" };
   }
 
-  private findMatchingLeft(text: string, origin: number, counter: number = 0): number {
-    for (let i = origin; i >= 0; --i) {
-      if (text[i] === this.close) {
-        ++counter;
-      } else if (text[i] === this.open) {
-        --counter;
-        if (counter === 0) {
-          return i;
-        }
+  private findPartner(text: string, has: string, from: number, direction: 1 | -1): number {
+    const needs = has === this.open ? this.close : this.open;
+    let count = 0;
+    while (from >= 0 && from < text.length) {
+      if (text.substr(from, has.length) === has) {
+        ++count;
+      } else if (text.substr(from, needs.length) === needs) {
+        --count;
       }
+      if (count === 0) {
+        return from;
+      }
+      from += direction;
     }
-
     return -1;
-  }
-
-  private find(text: string, delimiter: number): Range | undefined {
-    if (text[delimiter] === this.open) {
-      const start = delimiter;
-      const end = this.findMatchingRight(text, delimiter) + 1;
-      return { start, end };
-    } else if (text[delimiter] === this.close) {
-      const end = delimiter + 1;
-      const start = this.findMatchingLeft(text, end - 1);
-      return { start, end };
-    }
-    return undefined;
   }
 
   findNext(text: string, range: Range): Range | undefined {
-    for (let delimiter = range.end; delimiter < text.length; ++delimiter) {
-      if (text[delimiter] === this.open || text[delimiter] === this.close) {
-        return this.find(text, delimiter);
-      }
+    let { index, delimiter } = this.findNextDelimiter(text, range.end, 1);
+    if (delimiter === this.open) {
+      const start = index;
+      const end = this.findPartner(text, this.open, start, 1) + this.close.length;
+      return end > 0 ? { start, end } : undefined;
+    } else if (delimiter === this.close) {
+      const end = index + this.close.length;
+      const start = this.findPartner(text, this.close, index, -1);
+      return start >= 0 ? { start, end } : undefined;
     }
     return undefined;
   }
 
   findPrev(text: string, range: Range): Range | undefined {
-    for (let delimiter = range.start - 1; delimiter >= 0; --delimiter) {
-      if (text[delimiter] === this.open || text[delimiter] === this.close) {
-        return this.find(text, delimiter);
-      }
-    }
     return undefined;
   }
 
   expand(text: string, range: Range): Range | undefined {
-    // FIX ME: Does not balance
-    const end = this.findMatchingRight(text, range.end, 1) + 1;
-    const start = this.findMatchingLeft(text, range.start - 1, 1);
-
-    return start === -1 || end === 0 ? undefined : { start, end };
+    return undefined;
   }
 }
-export const parentheses = textObjectToCommand(new PairObject("(", ")"));
-export const curlybrackets = textObjectToCommand(new PairObject("{", "}"));
-export const brackets = textObjectToCommand(new PairObject("[", "]"));
+
+export const parentheses = textObjectToCommand(new PairedDelimiter("(", ")"));
+export const curlybrackets = textObjectToCommand(new PairedDelimiter("{", "}"));
+export const brackets = textObjectToCommand(new PairedDelimiter("[", "]"));
