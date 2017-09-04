@@ -294,30 +294,27 @@ export const quotes = textObjectToCommand(new SingleDelimiter("\""));
 export const tick = textObjectToCommand(new SingleDelimiter("`"));
 export const tripleTick = textObjectToCommand(new SingleDelimiter("```"));
 
-class PairedDelimiter implements TextObject {
-  constructor(private open: string, private close: string) {
-    if (this.open === this.close
-      && this.open.indexOf(this.close) === -1
-      && this.close.indexOf(this.open) === -1) {
-      throw new Error("Open and close delimiters can not be identical, nor contain eachother! " + this.open + " === " + this.close);
-    }
+function pairedDelimiter(open: string, close: string): TextObject {
+  if (open === close
+    && open.indexOf(close) === -1
+    && close.indexOf(open) === -1) {
+    throw new Error("Open and close delimiters can not be identical, nor contain eachother! " + open + " === " + close);
   }
 
-  private findNextDelimiter(text: string, from: number, direction: 1 | -1): { index: number, delimiter: string } {
+  function findNextDelimiter(text: string, from: number, direction: 1 | -1): { index: number, delimiter: string } {
     while (from >= 0 && from < text.length) {
-      if (text.substr(from, this.open.length) === this.open) {
-        return { index: from, delimiter: this.open };
-      } else if (text.substr(from, this.close.length) === this.close) {
-        return { index: from, delimiter: this.close };
+      if (text.substr(from, open.length) === open) {
+        return { index: from, delimiter: open };
+      } else if (text.substr(from, close.length) === close) {
+        return { index: from, delimiter: close };
       }
       from += direction;
     }
     return { index: -1, delimiter: "" };
   }
 
-  private findPartner(text: string, has: string, from: number, direction: 1 | -1): number {
-    const needs = has === this.open ? this.close : this.open;
-    let count = 0;
+  function findPartner(text: string, needs: string, from: number, direction: 1 | -1, count: number = 0): number {
+    const has = needs === open ? close : open;
     while (from >= 0 && from < text.length) {
       if (text.substr(from, has.length) === has) {
         ++count;
@@ -332,29 +329,41 @@ class PairedDelimiter implements TextObject {
     return -1;
   }
 
-  findNext(text: string, range: Range): Range | undefined {
-    let { index, delimiter } = this.findNextDelimiter(text, range.end, 1);
-    if (delimiter === this.open) {
-      const start = index;
-      const end = this.findPartner(text, this.open, start, 1) + this.close.length;
-      return end > 0 ? { start, end } : undefined;
-    } else if (delimiter === this.close) {
-      const end = index + this.close.length;
-      const start = this.findPartner(text, this.close, index, -1);
-      return start >= 0 ? { start, end } : undefined;
+  return {
+    findNext(text: string, range: Range): Range | undefined {
+      const { index, delimiter } = findNextDelimiter(text, range.end, 1);
+      if (delimiter === open) {
+        const start = index;
+        const end = findPartner(text, close, start, 1) + close.length;
+        return end > 0 ? { start, end } : undefined;
+      } else if (delimiter === close) {
+        const end = index + close.length;
+        const start = findPartner(text, open, index, -1);
+        return start >= 0 ? { start, end } : undefined;
+      }
+      return undefined;
+    },
+
+    findPrev(text: string, range: Range): Range | undefined {
+      const { index, delimiter } = findNextDelimiter(text, range.start - 1, -1);
+      if (delimiter === open) {
+        const start = index;
+        const end = findPartner(text, close, start, 1) + close.length;
+        return end > 0 ? { start, end } : undefined;
+      } else if (delimiter === close) {
+        const end = index + close.length;
+        const start = findPartner(text, open, index, -1);
+        return start >= 0 ? { start, end } : undefined;
+      }
+      return undefined;
+    },
+
+    expand(text: string, { start, end }: Range): Range | undefined {
+      return undefined;
     }
-    return undefined;
-  }
-
-  findPrev(text: string, range: Range): Range | undefined {
-    return undefined;
-  }
-
-  expand(text: string, range: Range): Range | undefined {
-    return undefined;
   }
 }
 
-export const parentheses = textObjectToCommand(new PairedDelimiter("(", ")"));
-export const curlybrackets = textObjectToCommand(new PairedDelimiter("{", "}"));
-export const brackets = textObjectToCommand(new PairedDelimiter("[", "]"));
+export const parentheses = textObjectToCommand(pairedDelimiter("(", ")"));
+export const curlybrackets = textObjectToCommand(pairedDelimiter("{", "}"));
+export const brackets = textObjectToCommand(pairedDelimiter("[", "]"));
