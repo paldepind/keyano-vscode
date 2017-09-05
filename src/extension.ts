@@ -2,20 +2,14 @@ import * as vscode from "vscode";
 import { StatusBarItem, window, StatusBarAlignment, workspace } from "vscode";
 import { Stack, Stackable, cons } from "./stack";
 import { getBindings, KeyboardLayout, Bindings } from "./bindings";
+import { KeyCommand } from "./command";
 
 enum Mode {
   Command,
   Insert
 }
 
-export enum HandlerResult {
-  DECLINE,
-  AWAIT,
-  ACCEPT,
-  ERROR
-}
-
-export type KeyHandler = (char: string) => HandlerResult;
+// export type KeyHandler = (stack: Stack, char: string) => Promise<HandlerResult>;
 
 function stackToString(stack: Stack): string {
   let str = "";
@@ -35,7 +29,7 @@ export class Extension {
   mode: Mode;
   stack: Stack;
   bindings = getBindings("qwerty");
-  keyHandler: KeyHandler | undefined;
+  keyHandler: KeyCommand | undefined;
 
   constructor() {
     this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
@@ -73,23 +67,13 @@ export class Extension {
     if (this.mode === Mode.Insert) {
       await vscode.commands.executeCommand("default:type", args);
     } else {
-      if (this.keyHandler !== undefined) {
-        const result = await this.keyHandler(args.text);
-        if (result === HandlerResult.AWAIT) {
-          return;
-        }
-        this.keyHandler = undefined;
-        if (result === HandlerResult.ACCEPT) {
-          return;
-        } else if (result === HandlerResult.ERROR) {
-          this.stack = undefined;
-          return;
-        }
-      }
-
-      const command = this.bindings.get(args.text);
+      const command = this.keyHandler !== undefined
+        ? this.keyHandler
+        : this.bindings.get(args.text);
       if (command !== undefined) {
-        [this.stack, this.keyHandler] = await command(this.stack, this);
+        const result = await command(this.stack, this, args.text);
+        this.stack = result.stack;
+        this.keyHandler = result.handler;
         this.statusBarStack.text = stackToString(this.stack);
       }
     }

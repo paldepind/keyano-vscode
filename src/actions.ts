@@ -8,7 +8,7 @@ import { last, flatten } from "./utils";
 export function actionCommand(f: (stack: Stack, main: Extension) => Thenable<void>): Command {
   return async (stack: Stack, main: Extension) => {
     await f(stack, main);
-    return [stack, undefined];
+    return { stack };
   };
 }
 
@@ -18,7 +18,7 @@ function insert(before: boolean): Command {
     const editor = window.activeTextEditor!;
     editor.selections = editor.selections.map((s) => new Selection(s[prop], s[prop]));
     main.enterInsertMode();
-    return [undefined, undefined];
+    return { stack: undefined };
   };
 }
 

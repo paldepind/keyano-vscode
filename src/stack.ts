@@ -1,5 +1,3 @@
-import { HandlerResult } from "./extension";
-
 export interface Stackable {
   toString: () => string;
 }

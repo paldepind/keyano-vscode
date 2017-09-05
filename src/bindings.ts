@@ -100,6 +100,7 @@ addBinding("w", textObjects.word);
 addBinding("\"", textObjects.quotes);
 addBinding("`", textObjects.tick);
 addBinding("~", textObjects.tripleTick);
+addBinding("d", textObjects.findText);
 
 // right hand homerow
 

@@ -522,3 +522,17 @@
         start: "```|```"
         input: e~
         selection is: "``````"
+
+- describe: findText
+  scenarios:
+  - it: selects the next occurrence
+    start: |
+      |here is a bunch of words
+    input: "dbunch\n"
+    selection is: bunch
+  - it: selects the previous occurrence
+    start: |
+      there is a lot
+      of text on these l[in]es
+    input: "pdlot\n"
+    selection is: "lot"
