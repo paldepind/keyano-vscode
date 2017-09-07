@@ -1,9 +1,9 @@
 import { window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
+import { Stack } from "./stack";
 import { directions, isDirection, isNumber, isJump, isAll, Direction, isExpand } from "./flags";
 import * as jump from "./jump";
-import { HandlerResult } from "./extension";
-import { Command } from "./command";
+import { Command, KeyCommand, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
 
 export interface TextObject {
@@ -18,7 +18,7 @@ export interface TextObject {
 function textObjectToCommand(source: TextObject): Command {
   return async (stack) => {
     if (window.activeTextEditor === undefined) {
-      return [undefined, undefined];
+      return { stack: undefined };
     }
     const editor = window.activeTextEditor;
     // Give us a variable to play with.
@@ -45,19 +45,18 @@ function textObjectToCommand(source: TextObject): Command {
     if (shouldJump) {
       const targets = jump.setTargets(textObject);
       let keys = "";
-      return [stack, char => {
-        if (char.search(/[a-z]/i) === -1) {
-          return HandlerResult.ERROR;
+      return {
+        stack,
+        handler: async function handler(stack2, _, char) {
+          keys = keys.concat(char);
+          if (keys.length < 2) {
+            return { stack: stack2, handler };
+          } else {
+            jump.goToTarget(keys, targets);
+            return { stack: stack2 };
+          }
         }
-
-        keys = keys.concat(char);
-        if (keys.length < 2) {
-          return HandlerResult.AWAIT;
-        } else {
-          jump.goToTarget(keys, targets);
-          return HandlerResult.ACCEPT;
-        }
-      }];
+      };
     } else if (selectAll) {
       const selections = [];
       const startRange = direction === undefined ? { start: 0, end: 0 } : selection;
@@ -82,7 +81,7 @@ function textObjectToCommand(source: TextObject): Command {
       }
     }
 
-    return [stack, undefined];
+    return { stack };
   };
 }
 
@@ -370,3 +369,44 @@ class PairObject implements TextObject {
 export const parentheses = textObjectToCommand(new PairObject("(", ")"));
 export const curlybrackets = textObjectToCommand(new PairObject("{", "}"));
 export const brackets = textObjectToCommand(new PairObject("[", "]"));
+
+function stringObject(literal: string): TextObject {
+  const { length } = literal;
+  return {
+    findNext(text, { end }) {
+      const nextMatch = text.indexOf(literal, end);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    },
+    findPrev(text, { start }) {
+      const nextMatch = text.lastIndexOf(literal, start);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    },
+    expand(text, { end }) {
+      const nextMatch = text.indexOf(literal, end);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    }
+  };
+}
+
+export async function findText(initialStack: Stack) {
+  let literal = "";
+  async function handler(stack: Stack, main: any, char: string): CommandResult {
+    if (char === "\n") {
+      if (literal !== "") {
+        return await textObjectToCommand(stringObject(literal))(stack, main);
+      } else {
+        return { stack };
+      }
+    } else {
+      literal += char;
+      return { stack, handler };
+    }
+  }
+  return { stack: initialStack, handler };
+}
