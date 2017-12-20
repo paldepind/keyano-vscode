@@ -1,7 +1,15 @@
 import { window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
 import { Stack } from "./stack";
-import { directions, isDirection, isNumber, isJump, isAll, Direction, isExpand } from "./flags";
+import {
+  directions,
+  isDirection,
+  isNumber,
+  isJump,
+  isAll,
+  Direction,
+  isExpand
+} from "./flags";
 import * as jump from "./jump";
 import { Command, KeyCommand, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
@@ -16,7 +24,7 @@ export interface TextObject {
 
 // Do not touch source variable.
 function textObjectToCommand(source: TextObject): Command {
-  return async (stack) => {
+  return async stack => {
     if (window.activeTextEditor === undefined) {
       return { stack: undefined };
     }
@@ -25,13 +33,14 @@ function textObjectToCommand(source: TextObject): Command {
     let textObject = source;
 
     const {
-      newStack, args: { direction, shouldJump, expand, selectAll }
+      newStack,
+      args: { direction, shouldJump, expand, selectAll }
     } = stackHelpers.readArgumentsFromStack(stack, {
-        direction: { isType: isDirection, defaultTo: undefined }, // undefined = use findNext normally.
-        shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
-        expand: { isType: isExpand, defaultTo: false, handler: () => true },
-        selectAll: { isType: isAll, defaultTo: false, handler: () => true }
-      });
+      direction: { isType: isDirection, defaultTo: undefined }, // undefined = use findNext normally.
+      shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
+      expand: { isType: isExpand, defaultTo: false, handler: () => true },
+      selectAll: { isType: isAll, defaultTo: false, handler: () => true }
+    });
     stack = newStack;
 
     const { document } = editor;
@@ -59,7 +68,8 @@ function textObjectToCommand(source: TextObject): Command {
       };
     } else if (selectAll) {
       const selections = [];
-      const startRange = direction === undefined ? { start: 0, end: 0 } : selection;
+      const startRange =
+        direction === undefined ? { start: 0, end: 0 } : selection;
       let range = textObject.findNext(text, startRange);
       while (range !== undefined) {
         selections.push(rangeToSelection(document, range));
@@ -100,8 +110,11 @@ enum CharacterType {
 
 function isWhitespace(char: string): boolean {
   if (
-    char === "\u0020" || char === "\u0009" || char === "\u000A" ||
-    char === "\u000C" || char === "\u000D"
+    char === "\u0020" ||
+    char === "\u0009" ||
+    char === "\u000A" ||
+    char === "\u000C" ||
+    char === "\u000D"
   ) {
     return true;
   } else {
@@ -137,7 +150,7 @@ function findWhere(
   text: string,
   predicate: (char: string) => boolean,
   from: number,
-  direction: number = 1
+  direction: 1 | -1 = 1
 ): number {
   let i = from;
   while (i >= 0 && i < text.length) {
@@ -154,7 +167,7 @@ function findBorder(
   inside: (char: string) => boolean,
   outside: (char: string) => boolean,
   from: number,
-  direction: number = 1
+  direction: 1 | -1 = 1
 ): number {
   let i = from + direction;
   while (i >= 0 && i < text.length) {
@@ -224,11 +237,16 @@ export const word = textObjectToCommand({
         end = range.end;
       }
     }
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   }
 });
 
-function entireDocumentRange(text: string, { start, end }: Range): Range | undefined {
+function entireDocumentRange(
+  text: string,
+  { start, end }: Range
+): Range | undefined {
   return start !== 0 || end !== text.length
     ? { start: 0, end: text.length }
     : undefined;
@@ -243,17 +261,22 @@ export const buffer = textObjectToCommand({
 export const line = textObjectToCommand({
   findNext(text: string, range: Range): Range | undefined {
     let end = text.indexOf("\n", range.end + 1);
-    end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
+    end =
+      end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
     let start = text.lastIndexOf("\n", end - 1) + 1;
 
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   },
 
   findPrev(text: string, range: Range): Range | undefined {
     const start = text.lastIndexOf("\n", range.start - 2) + 1;
     let end = text.indexOf("\n", start);
     end = end >= 0 ? end : text.length;
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   },
 
   expand(text: string, range: Range): Range | undefined {
@@ -263,112 +286,142 @@ export const line = textObjectToCommand({
     if (start === range.start && end === range.end) {
       start = text.lastIndexOf("\n", start - 2) + 1;
       end = text.indexOf("\n", end + 1);
-      end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
+      end =
+        end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
     }
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   }
 });
 
 class SingleDelimiter implements TextObject {
-  constructor(private delimiter: string) { }
+  constructor(private delimiter: string) {}
 
   findNext(text: string, range: Range): Range | undefined {
     let start = text.indexOf(this.delimiter, range.end);
-    let end = text.indexOf(this.delimiter, start + this.delimiter.length) + this.delimiter.length;
+    let end =
+      text.indexOf(this.delimiter, start + this.delimiter.length) +
+      this.delimiter.length;
     return start >= 0 && end > start ? { start, end } : undefined;
   }
   findPrev(text: string, range: Range): Range | undefined {
-    let end = text.lastIndexOf(this.delimiter, range.start - 1) + this.delimiter.length;
-    let start = text.lastIndexOf(this.delimiter, end - this.delimiter.length - 1);
-    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
+    let end =
+      text.lastIndexOf(this.delimiter, range.start - 1) + this.delimiter.length;
+    let start = text.lastIndexOf(
+      this.delimiter,
+      end - this.delimiter.length - 1
+    );
+    return start >= 0 && end > start + this.delimiter.length
+      ? { start, end }
+      : undefined;
   }
   expand(text: string, range: Range): Range | undefined {
-    let start = text.lastIndexOf(this.delimiter, range.start - this.delimiter.length);
+    let start = text.lastIndexOf(
+      this.delimiter,
+      range.start - this.delimiter.length
+    );
     let end = text.indexOf(this.delimiter, range.end) + this.delimiter.length;
-    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
+    return start >= 0 && end > start + this.delimiter.length
+      ? { start, end }
+      : undefined;
   }
 }
 
-export const quotes = textObjectToCommand(new SingleDelimiter("\""));
+export const quotes = textObjectToCommand(new SingleDelimiter('"'));
 export const tick = textObjectToCommand(new SingleDelimiter("`"));
 export const tripleTick = textObjectToCommand(new SingleDelimiter("```"));
 
-class PairObject implements TextObject {
-  constructor(private open: string, private close: string) {
+function pairedDelimiter(open: string, close: string): TextObject {
+  if (
+    open === close &&
+    open.indexOf(close) === -1 &&
+    close.indexOf(open) === -1
+  ) {
+    throw new Error(
+      "Open and close delimiters can not be identical, nor contain eachother! " +
+        open +
+        " === " +
+        close
+    );
   }
 
-  private findMatchingRight(text: string, origin: number, counter: number = 0): number {
-    for (let i = origin; i < text.length; ++i) {
-      if (text[i] === this.open) {
-        ++counter;
-      } else if (text[i] === this.close) {
-        --counter;
-        if (counter === 0) {
-          return i;
-        }
+  function findNextDelimiter(
+    text: string,
+    from: number,
+    direction: 1 | -1
+  ): { index: number; delimiter: string } {
+    while (from >= 0 && from < text.length) {
+      if (text.substr(from, open.length) === open) {
+        return { index: from, delimiter: open };
+      } else if (text.substr(from, close.length) === close) {
+        return { index: from, delimiter: close };
       }
+      from += direction;
     }
+    return { index: -1, delimiter: "" };
+  }
 
+  function findPartner(
+    text: string,
+    needs: string,
+    from: number,
+    direction: 1 | -1,
+    count: number = 0
+  ): number {
+    const has = needs === open ? close : open;
+    while (from >= 0 && from < text.length) {
+      if (text.substr(from, has.length) === has) {
+        ++count;
+      } else if (text.substr(from, needs.length) === needs) {
+        --count;
+      }
+      if (count === 0) {
+        return from;
+      }
+      from += direction;
+    }
     return -1;
   }
 
-  private findMatchingLeft(text: string, origin: number, counter: number = 0): number {
-    for (let i = origin; i >= 0; --i) {
-      if (text[i] === this.close) {
-        ++counter;
-      } else if (text[i] === this.open) {
-        --counter;
-        if (counter === 0) {
-          return i;
-        }
+  return {
+    findNext(text: string, range: Range): Range | undefined {
+      const { index, delimiter } = findNextDelimiter(text, range.end, 1);
+      if (delimiter === open) {
+        const start = index;
+        const end = findPartner(text, close, start, 1) + close.length;
+        return end > 0 ? { start, end } : undefined;
+      } else if (delimiter === close) {
+        const end = index + close.length;
+        const start = findPartner(text, open, index, -1);
+        return start >= 0 ? { start, end } : undefined;
       }
-    }
+      return undefined;
+    },
 
-    return -1;
-  }
-
-  private find(text: string, delimiter: number): Range | undefined {
-    if (text[delimiter] === this.open) {
-      const start = delimiter;
-      const end = this.findMatchingRight(text, delimiter) + 1;
-      return { start, end };
-    } else if (text[delimiter] === this.close) {
-      const end = delimiter + 1;
-      const start = this.findMatchingLeft(text, end - 1);
-      return { start, end };
-    }
-    return undefined;
-  }
-
-  findNext(text: string, range: Range): Range | undefined {
-    for (let delimiter = range.end; delimiter < text.length; ++delimiter) {
-      if (text[delimiter] === this.open || text[delimiter] === this.close) {
-        return this.find(text, delimiter);
+    findPrev(text: string, range: Range): Range | undefined {
+      const { index, delimiter } = findNextDelimiter(text, range.start - 1, -1);
+      if (delimiter === open) {
+        const start = index;
+        const end = findPartner(text, close, start, 1) + close.length;
+        return end > 0 ? { start, end } : undefined;
+      } else if (delimiter === close) {
+        const end = index + close.length;
+        const start = findPartner(text, open, index, -1);
+        return start >= 0 ? { start, end } : undefined;
       }
+      return undefined;
+    },
+
+    expand(text: string, { start, end }: Range): Range | undefined {
+      return undefined;
     }
-    return undefined;
-  }
-
-  findPrev(text: string, range: Range): Range | undefined {
-    for (let delimiter = range.start - 1; delimiter >= 0; --delimiter) {
-      if (text[delimiter] === this.open || text[delimiter] === this.close) {
-        return this.find(text, delimiter);
-      }
-    }
-    return undefined;
-  }
-
-  expand(text: string, range: Range): Range | undefined {
-    // FIX ME: Does not balance
-    const end = this.findMatchingRight(text, range.end, 1) + 1;
-    const start = this.findMatchingLeft(text, range.start - 1, 1);
-
-    return start === -1 || end === 0 ? undefined : { start, end };
-  }
+  };
 }
-export const parentheses = textObjectToCommand(new PairObject("(", ")"));
-export const curlybrackets = textObjectToCommand(new PairObject("{", "}"));
-export const brackets = textObjectToCommand(new PairObject("[", "]"));
+
+export const parentheses = textObjectToCommand(pairedDelimiter("(", ")"));
+export const curlybrackets = textObjectToCommand(pairedDelimiter("{", "}"));
+export const brackets = textObjectToCommand(pairedDelimiter("[", "]"));
 
 function stringObject(literal: string): TextObject {
   const { length } = literal;

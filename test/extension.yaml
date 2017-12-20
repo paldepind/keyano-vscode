@@ -27,7 +27,6 @@
       first second third
     selections are: [" ", " "]
 
-
 # Text objects
 - describe: word
   cases:
@@ -523,6 +522,116 @@
         input: e~
         selection is: "``````"
 
+- describe: paired delimiter
+  cases:
+    - describe: "#findNext()"
+      scenarios:
+      - it: selects pair
+        start: "|( foo bar )"
+        input: n(
+        selection is: ( foo bar )
+      - it: selects pair from beginning of line
+        start: "|( foo ) bar"
+        input: n(
+        selection is: ( foo )
+      - it: selects pair from middle of line
+        start: foo | ( bar )
+        input: n(
+        selection is: ( bar )
+      - it: selects next pair
+        start: ( foo )| ( bar )
+        input: n(
+        selection is: ( bar )
+      - it: selects pair it's inside
+        start: ( fo|o )  ( bar )
+        input: n(
+        selection is: ( foo )
+      - it: traverses within pair
+        start: ( foo [( bar )] ( baz ) )
+        input: n(
+        selection is: ( baz )
+      - it: expands out when no inner pair
+        start: ( foo ( bar ) [( baz )] )
+        input: n(
+        selection is: ( foo ( bar ) ( baz ) )
+      - it: does nothing when no next pair, open
+        start: foo ( bar ) [( baz )] (
+        input: n(
+        selection is: ( baz )
+      - it: does nothing when no next pair, close
+        start: foo ( bar ) [( baz )] )
+        input: n(
+        selection is: ( baz )
+      - it: expands partly covered pair if only covering start
+        start: "[( fo]o ) ( bar )"
+        input: n(
+        selection is: ( foo )
+      - it: selects next pair if covering end
+        start: "( f[oo )] ( bar )"
+        input: n(
+        selection is: ( bar )
+      - it: selects balanced pair
+        start: "|( ( bar ) ( baz ) )"
+        input: n(
+        selection is: ( ( bar ) ( baz ) )
+      - it: selects balanced pair
+        start: "( [( bar ) ( b]az ) )"
+        input: n(
+        selection is: ( baz )
+    - describe: "#findPrev()"
+      scenarios:
+      - it: selects pair
+        start: ( foo bar )|
+        input: p(
+        selection is: ( foo bar )
+      - it: selects pair from middle of line
+        start: ( foo ) |bar
+        input: p(
+        selection is: ( foo )
+      - it: selects pair from end of line
+        start: foo ( bar )|
+        input: p(
+        selection is: ( bar )
+      - it: selects previous pair
+        start: ( foo ) |( bar )
+        input: p(
+        selection is: ( foo )
+      - it: selects pair it's inside
+        start: ( foo )  ( b|ar )
+        input: p(
+        selection is: ( bar )
+      - it: traverses within pair
+        start: ( foo ( bar ) [( baz )] )
+        input: p(
+        selection is: ( bar )
+      - it: expands out when no inner pair
+        start: ( foo [( bar )] ( baz ) )
+        input: p(
+        selection is: ( foo ( bar ) ( baz ) )
+      - it: does nothing when no next pair, open
+        start: ( foo [( bar )] ( baz )
+        input: p(
+        selection is: ( bar )
+      - it: does nothing when no next pair, open
+        start: ) foo [( bar )] ( baz )
+        input: p(
+        selection is: ( bar )
+      - it: expands partly covered pair if only covering end
+        start: ( foo ) ( ba[r )]
+        input: p(
+        selection is: ( bar )
+      - it: selects previous pair if covering start
+        start: ( foo ) [( b]ar )
+        input: p(
+        selection is: ( foo )
+      - it: selects balanced pair
+        start: ( ( bar ) ( baz ) )|
+        input: p(
+        selection is: ( ( bar ) ( baz ) )
+      - it: selects balanced pair
+        start: "( ( ba[r ) ( baz )] )"
+        input: p(
+        selection is: ( bar )
 - describe: findText
   scenarios:
   - it: selects the next occurrence
