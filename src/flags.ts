@@ -11,7 +11,7 @@ const allFlag = {
   toString: () => "all"
 };
 
-export function isAll(obj: any): obj is (typeof jumpFlag) {
+export function isAll(obj: any): obj is typeof jumpFlag {
   return obj && obj.type === allFlag.type;
 }
 
@@ -20,7 +20,7 @@ const jumpFlag = {
   toString: () => "jump"
 };
 
-export function isJump(obj: any): obj is (typeof jumpFlag) {
+export function isJump(obj: any): obj is typeof jumpFlag {
   return obj && obj.type === jumpFlag.type;
 }
 
@@ -29,7 +29,7 @@ const expandFlag = {
   toString: () => "expand"
 };
 
-export function isExpand(obj: any): obj is (typeof expandFlag) {
+export function isExpand(obj: any): obj is typeof expandFlag {
   return obj && obj.type === expandFlag.type;
 }
 

@@ -48,7 +48,10 @@ function addBinding(key: string, command: Command): void {
 
 export type KeyboardLayout = "qwerty" | "colemak";
 
-function translateBindings(translations: Map<string, string>, bindings: Bindings) {
+function translateBindings(
+  translations: Map<string, string>,
+  bindings: Bindings
+) {
   const translated = new Map();
   for (const [key, command] of bindings) {
     let newKey = translations.get(key);
@@ -97,7 +100,7 @@ addBinding("[", textObjects.brackets);
 addBinding("y", composeCommand(flags.next, textObjects.buffer));
 addBinding("q", textObjects.line);
 addBinding("w", textObjects.word);
-addBinding("\"", textObjects.quotes);
+addBinding('"', textObjects.quotes);
 addBinding("`", textObjects.tick);
 addBinding("~", textObjects.tripleTick);
 addBinding("d", textObjects.findText);
