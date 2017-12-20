@@ -44,6 +44,7 @@ export class Extension {
   enterCommandMode() {
     this.mode = Mode.Command;
     this.statusBarItem.text = "$(tools)";
+    vscode.commands.executeCommand("setContext", "keyano.mode", "command");
     this.statusBarItem.tooltip = "Command mode";
     if (window.activeTextEditor !== undefined) {
       window.activeTextEditor.options.cursorStyle =
@@ -55,6 +56,7 @@ export class Extension {
     this.mode = Mode.Insert;
     this.statusBarItem.text = "$(pencil)";
     this.statusBarItem.tooltip = "Insert mode";
+    vscode.commands.executeCommand("setContext", "keyano.mode", "insert");
     if (window.activeTextEditor !== undefined) {
       window.activeTextEditor.options.cursorStyle =
         vscode.TextEditorCursorStyle.Line;
@@ -90,10 +92,12 @@ function registerCommandDisposable(context: vscode.ExtensionContext) {
   };
 }
 
-export const extension = new Extension();
+export let extension: Extension;
 
 // this function is called when the extension is activated
 export function activate(context: vscode.ExtensionContext) {
+  extension = new Extension();
+
   const registerCommand = registerCommandDisposable(context);
 
   // Load configured layout and watch for changes

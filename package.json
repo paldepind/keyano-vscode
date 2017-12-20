@@ -28,7 +28,8 @@
     "keybindings": [
       {
         "key": "Escape",
-        "command": "keyano.escape"
+        "command": "keyano.escape",
+        "when": "editorTextFocus && keyano.mode == 'insert'"
       }
     ]
   },
