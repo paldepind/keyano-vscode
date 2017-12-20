@@ -3,19 +3,28 @@ import { workspace, window, Selection, TextDocument } from "vscode";
 // Helper functions for interacting with VSCode
 
 export type Range = {
-  start: number,
-  end: number
+  start: number;
+  end: number;
 };
 
-export function rangeToSelection(document: TextDocument, range: Range): Selection {
+export function rangeToSelection(
+  document: TextDocument,
+  range: Range
+): Selection {
   return new Selection(
     document.positionAt(range.start),
     document.positionAt(range.end)
   );
 }
 
-export function selectionToRange(document: TextDocument, selection: Selection): Range {
-  return { start: document.offsetAt(selection.start), end: document.offsetAt(selection.end) };
+export function selectionToRange(
+  document: TextDocument,
+  selection: Selection
+): Range {
+  return {
+    start: document.offsetAt(selection.start),
+    end: document.offsetAt(selection.end)
+  };
 }
 
 export function getSelections(): Selection[] {
@@ -35,7 +44,10 @@ export function getText(selection: Selection): string {
   return editor.document.getText(selection);
 }
 
-export function replaceText(selection: Selection, newText: string): Thenable<any> {
+export function replaceText(
+  selection: Selection,
+  newText: string
+): Thenable<any> {
   return window.activeTextEditor!.edit((builder) => {
     builder.replace(selection, newText);
   });

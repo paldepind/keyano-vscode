@@ -8,7 +8,10 @@ import { window, Selection, workspace } from "vscode";
 import { extension } from "../src/extension";
 
 function randomName() {
-  return Math.random().toString(36).replace(/[^a-z]+/g, "").substr(0, 10);
+  return Math.random()
+    .toString(36)
+    .replace(/[^a-z]+/g, "")
+    .substr(0, 10);
 }
 
 async function createRandomFile(contents: string): Promise<vscode.Uri> {
@@ -41,7 +44,10 @@ async function setFileContent(text: string): Promise<vscode.TextEditor> {
     throw new Error("No active editor");
   }
   const { document } = editor;
-  const selection = new Selection(document.positionAt(0), document.positionAt(Infinity));
+  const selection = new Selection(
+    document.positionAt(0),
+    document.positionAt(Infinity)
+  );
   await editor.edit((builder) => {
     builder.delete(selection);
     builder.insert(document.positionAt(0), text);
@@ -50,12 +56,12 @@ async function setFileContent(text: string): Promise<vscode.TextEditor> {
 }
 
 type Scenario = {
-  it: string,
-  start: string,
-  input: string,
-  "selection is"?: string,
-  "selections are"?: string[],
-  "text is"?: string
+  it: string;
+  start: string;
+  input: string;
+  "selection is"?: string;
+  "selections are"?: string[];
+  "text is"?: string;
 };
 
 function checkScenario(scenario: object) {
@@ -65,9 +71,9 @@ function checkScenario(scenario: object) {
 }
 
 type Describe = {
-  describe: string,
-  scenarios?: Scenario[]
-  cases?: Describe[]
+  describe: string;
+  scenarios?: Scenario[];
+  cases?: Describe[];
 };
 
 // VSCode compiles this TS file into a JS file in /out/test and the
@@ -81,14 +87,18 @@ function testScenarios(scenarios: Scenario[]): void {
     it(scenario.it, async () => {
       checkScenario(scenario);
       const editor = await setFileContent(
-        scenario.start.replace("|", "").replace("[", "").replace("]", "")
+        scenario.start
+          .replace("|", "")
+          .replace("[", "")
+          .replace("]", "")
       );
       const { document } = editor;
       // Handle pipe, currently only supports one
       const cursorPosition = scenario.start.indexOf("|");
       if (cursorPosition !== -1) {
         editor.selection = new Selection(
-          document.positionAt(cursorPosition), document.positionAt(cursorPosition)
+          document.positionAt(cursorPosition),
+          document.positionAt(cursorPosition)
         );
       }
       // Handle brackets, currently only supports a single pair
@@ -115,10 +125,7 @@ function testScenarios(scenarios: Scenario[]): void {
         assert.deepEqual(actual, scenario["selections are"]);
       }
       if (scenario["text is"] !== undefined) {
-        assert.strictEqual(
-          document.getText(),
-          scenario["text is"]
-        );
+        assert.strictEqual(document.getText(), scenario["text is"]);
       }
     });
   }

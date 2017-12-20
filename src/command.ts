@@ -1,10 +1,14 @@
 import { Extension } from "./extension";
 import { Stack, Stackable, cons } from "./stack";
 
-export type CommandResult = Promise<{ stack: Stack, handler?: KeyCommand }>;
+export type CommandResult = Promise<{ stack: Stack; handler?: KeyCommand }>;
 
 export type Command = (stack: Stack, main: Extension) => CommandResult;
-export type KeyCommand = (stack: Stack, main: Extension, key: string) => CommandResult;
+export type KeyCommand = (
+  stack: Stack,
+  main: Extension,
+  key: string
+) => CommandResult;
 
 export function pushToStack(element: Stackable): Command {
   return async (stack) => ({ stack: cons(element, stack) });

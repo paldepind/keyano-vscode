@@ -46,7 +46,8 @@ export class Extension {
     this.statusBarItem.text = "$(tools)";
     this.statusBarItem.tooltip = "Command mode";
     if (window.activeTextEditor !== undefined) {
-      window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.Block;
+      window.activeTextEditor.options.cursorStyle =
+        vscode.TextEditorCursorStyle.Block;
     }
   }
 
@@ -55,7 +56,8 @@ export class Extension {
     this.statusBarItem.text = "$(pencil)";
     this.statusBarItem.tooltip = "Insert mode";
     if (window.activeTextEditor !== undefined) {
-      window.activeTextEditor.options.cursorStyle = vscode.TextEditorCursorStyle.Line;
+      window.activeTextEditor.options.cursorStyle =
+        vscode.TextEditorCursorStyle.Line;
     }
   }
 
@@ -67,9 +69,10 @@ export class Extension {
     if (this.mode === Mode.Insert) {
       await vscode.commands.executeCommand("default:type", args);
     } else {
-      const command = this.keyHandler !== undefined
-        ? this.keyHandler
-        : this.bindings.get(args.text);
+      const command =
+        this.keyHandler !== undefined
+          ? this.keyHandler
+          : this.bindings.get(args.text);
       if (command !== undefined) {
         const result = await command(this.stack, this, args.text);
         this.stack = result.stack;
@@ -109,10 +112,11 @@ export function activate(context: vscode.ExtensionContext) {
       extension.handleInput(arg);
     });
   } catch (error) {
-    console.log("Could not register type command. Another extension must have already done so.");
+    console.log(
+      "Could not register type command. Another extension must have already done so."
+    );
   }
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
-}
+export function deactivate() {}

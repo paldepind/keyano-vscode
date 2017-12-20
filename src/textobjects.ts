@@ -24,7 +24,7 @@ export interface TextObject {
 
 // Do not touch source variable.
 function textObjectToCommand(source: TextObject): Command {
-  return async stack => {
+  return async (stack) => {
     if (window.activeTextEditor === undefined) {
       return { stack: undefined };
     }
