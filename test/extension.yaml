@@ -26,6 +26,14 @@
     text is: |
       first second third
     selections are: [" ", " "]
+- describe: change
+  scenarios:
+  - it: deletes text and enters insert mode
+    start: |
+      here [is] some words
+    input: dare
+    text is: |
+      here are some words
 
 # Text objects
 - describe: word
@@ -637,11 +645,11 @@
   - it: selects the next occurrence
     start: |
       |here is a bunch of words
-    input: "dbunch\n"
+    input: "fbunch\n"
     selection is: bunch
   - it: selects the previous occurrence
     start: |
       there is a lot
       of text on these l[in]es
-    input: "pdlot\n"
+    input: "pflot\n"
     selection is: "lot"

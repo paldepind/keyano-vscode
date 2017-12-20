@@ -86,6 +86,10 @@ function testScenarios(scenarios: Scenario[]): void {
   for (const scenario of scenarios) {
     it(scenario.it, async () => {
       checkScenario(scenario);
+
+      // Ensure that we begin each test in command mode
+      extension.enterCommandMode();
+
       const editor = await setFileContent(
         scenario.start
           .replace("|", "")

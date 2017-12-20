@@ -80,6 +80,7 @@ addBinding("v", actions.paste);
 
 addBinding("t", actions.join);
 addBinding("T", actions.joinSelect);
+addBinding("d", actions.change);
 
 // mode switching
 
@@ -103,7 +104,7 @@ addBinding("w", textObjects.word);
 addBinding('"', textObjects.quotes);
 addBinding("`", textObjects.tick);
 addBinding("~", textObjects.tripleTick);
-addBinding("d", textObjects.findText);
+addBinding("f", textObjects.findText);
 
 // right hand homerow
 

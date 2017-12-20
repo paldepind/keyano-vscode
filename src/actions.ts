@@ -43,6 +43,11 @@ export const paste = actionCommand(() =>
   commands.executeCommand("editor.action.clipboardPasteAction")
 );
 
+export const change = actionCommand(async (stack, main) => {
+  await commands.executeCommand("editor.action.clipboardCutAction");
+  main.enterInsertMode();
+});
+
 function trimLeft(s: string): string {
   return s.replace(/^\s+/, "");
 }
