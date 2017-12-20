@@ -134,7 +134,7 @@ function doDescriptions(descriptions: Describe[]): void {
       if (description.cases !== undefined) {
         doDescriptions(description.cases);
       }
-    })
+    });
   }
 }
 

@@ -27,7 +27,6 @@
       first second third
     selections are: [" ", " "]
 
-
 # Text objects
 - describe: word
   cases:
@@ -633,3 +632,16 @@
         start: "( ( ba[r ) ( baz )] )"
         input: p(
         selection is: ( bar )
+- describe: findText
+  scenarios:
+  - it: selects the next occurrence
+    start: |
+      |here is a bunch of words
+    input: "dbunch\n"
+    selection is: bunch
+  - it: selects the previous occurrence
+    start: |
+      there is a lot
+      of text on these l[in]es
+    input: "pdlot\n"
+    selection is: "lot"

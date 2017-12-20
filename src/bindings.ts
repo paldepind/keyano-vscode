@@ -34,7 +34,8 @@ const qwertyToColemak = new Map([
 ]);
 
 for (const [from, to] of qwertyToColemak) {
-  qwertyToColemak.set(from.toUpperCase(), to.toUpperCase());
+  const upperCase = from === ";" ? ":" : from.toUpperCase();
+  qwertyToColemak.set(upperCase, to.toUpperCase());
 }
 
 export type Bindings = Map<string, Command>;
@@ -99,6 +100,7 @@ addBinding("w", textObjects.word);
 addBinding("\"", textObjects.quotes);
 addBinding("`", textObjects.tick);
 addBinding("~", textObjects.tripleTick);
+addBinding("d", textObjects.findText);
 
 // right hand homerow
 

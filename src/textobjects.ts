@@ -1,9 +1,17 @@
 import { window, Selection, TextDocument } from "vscode";
 import * as stackHelpers from "./stack";
-import { directions, isDirection, isNumber, isJump, isAll, Direction, isExpand } from "./flags";
+import { Stack } from "./stack";
+import {
+  directions,
+  isDirection,
+  isNumber,
+  isJump,
+  isAll,
+  Direction,
+  isExpand
+} from "./flags";
 import * as jump from "./jump";
-import { HandlerResult } from "./extension";
-import { Command } from "./command";
+import { Command, KeyCommand, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
 
 export interface TextObject {
@@ -16,22 +24,23 @@ export interface TextObject {
 
 // Do not touch source variable.
 function textObjectToCommand(source: TextObject): Command {
-  return async (stack) => {
+  return async stack => {
     if (window.activeTextEditor === undefined) {
-      return [undefined, undefined];
+      return { stack: undefined };
     }
     const editor = window.activeTextEditor;
     // Give us a variable to play with.
     let textObject = source;
 
     const {
-      newStack, args: { direction, shouldJump, expand, selectAll }
+      newStack,
+      args: { direction, shouldJump, expand, selectAll }
     } = stackHelpers.readArgumentsFromStack(stack, {
-        direction: { isType: isDirection, defaultTo: undefined }, // undefined = use findNext normally.
-        shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
-        expand: { isType: isExpand, defaultTo: false, handler: () => true },
-        selectAll: { isType: isAll, defaultTo: false, handler: () => true }
-      });
+      direction: { isType: isDirection, defaultTo: undefined }, // undefined = use findNext normally.
+      shouldJump: { isType: isJump, defaultTo: false, handler: () => true },
+      expand: { isType: isExpand, defaultTo: false, handler: () => true },
+      selectAll: { isType: isAll, defaultTo: false, handler: () => true }
+    });
     stack = newStack;
 
     const { document } = editor;
@@ -45,22 +54,22 @@ function textObjectToCommand(source: TextObject): Command {
     if (shouldJump) {
       const targets = jump.setTargets(textObject);
       let keys = "";
-      return [stack, char => {
-        if (char.search(/[a-z]/i) === -1) {
-          return HandlerResult.ERROR;
+      return {
+        stack,
+        handler: async function handler(stack2, _, char) {
+          keys = keys.concat(char);
+          if (keys.length < 2) {
+            return { stack: stack2, handler };
+          } else {
+            jump.goToTarget(keys, targets);
+            return { stack: stack2 };
+          }
         }
-
-        keys = keys.concat(char);
-        if (keys.length < 2) {
-          return HandlerResult.AWAIT;
-        } else {
-          jump.goToTarget(keys, targets);
-          return HandlerResult.ACCEPT;
-        }
-      }];
+      };
     } else if (selectAll) {
       const selections = [];
-      const startRange = direction === undefined ? { start: 0, end: 0 } : selection;
+      const startRange =
+        direction === undefined ? { start: 0, end: 0 } : selection;
       let range = textObject.findNext(text, startRange);
       while (range !== undefined) {
         selections.push(rangeToSelection(document, range));
@@ -82,7 +91,7 @@ function textObjectToCommand(source: TextObject): Command {
       }
     }
 
-    return [stack, undefined];
+    return { stack };
   };
 }
 
@@ -101,8 +110,11 @@ enum CharacterType {
 
 function isWhitespace(char: string): boolean {
   if (
-    char === "\u0020" || char === "\u0009" || char === "\u000A" ||
-    char === "\u000C" || char === "\u000D"
+    char === "\u0020" ||
+    char === "\u0009" ||
+    char === "\u000A" ||
+    char === "\u000C" ||
+    char === "\u000D"
   ) {
     return true;
   } else {
@@ -225,11 +237,16 @@ export const word = textObjectToCommand({
         end = range.end;
       }
     }
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   }
 });
 
-function entireDocumentRange(text: string, { start, end }: Range): Range | undefined {
+function entireDocumentRange(
+  text: string,
+  { start, end }: Range
+): Range | undefined {
   return start !== 0 || end !== text.length
     ? { start: 0, end: text.length }
     : undefined;
@@ -244,17 +261,22 @@ export const buffer = textObjectToCommand({
 export const line = textObjectToCommand({
   findNext(text: string, range: Range): Range | undefined {
     let end = text.indexOf("\n", range.end + 1);
-    end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
+    end =
+      end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
     let start = text.lastIndexOf("\n", end - 1) + 1;
 
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   },
 
   findPrev(text: string, range: Range): Range | undefined {
     const start = text.lastIndexOf("\n", range.start - 2) + 1;
     let end = text.indexOf("\n", start);
     end = end >= 0 ? end : text.length;
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   },
 
   expand(text: string, range: Range): Range | undefined {
@@ -264,44 +286,71 @@ export const line = textObjectToCommand({
     if (start === range.start && end === range.end) {
       start = text.lastIndexOf("\n", start - 2) + 1;
       end = text.indexOf("\n", end + 1);
-      end = end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
+      end =
+        end >= 0 ? end : text.length - (text[text.length - 1] === "\n" ? 1 : 0);
     }
-    return start !== range.start || end !== range.end ? { start, end } : undefined;
+    return start !== range.start || end !== range.end
+      ? { start, end }
+      : undefined;
   }
 });
 
 class SingleDelimiter implements TextObject {
-  constructor(private delimiter: string) { }
+  constructor(private delimiter: string) {}
 
   findNext(text: string, range: Range): Range | undefined {
     let start = text.indexOf(this.delimiter, range.end);
-    let end = text.indexOf(this.delimiter, start + this.delimiter.length) + this.delimiter.length;
+    let end =
+      text.indexOf(this.delimiter, start + this.delimiter.length) +
+      this.delimiter.length;
     return start >= 0 && end > start ? { start, end } : undefined;
   }
   findPrev(text: string, range: Range): Range | undefined {
-    let end = text.lastIndexOf(this.delimiter, range.start - 1) + this.delimiter.length;
-    let start = text.lastIndexOf(this.delimiter, end - this.delimiter.length - 1);
-    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
+    let end =
+      text.lastIndexOf(this.delimiter, range.start - 1) + this.delimiter.length;
+    let start = text.lastIndexOf(
+      this.delimiter,
+      end - this.delimiter.length - 1
+    );
+    return start >= 0 && end > start + this.delimiter.length
+      ? { start, end }
+      : undefined;
   }
   expand(text: string, range: Range): Range | undefined {
-    let start = text.lastIndexOf(this.delimiter, range.start - this.delimiter.length);
+    let start = text.lastIndexOf(
+      this.delimiter,
+      range.start - this.delimiter.length
+    );
     let end = text.indexOf(this.delimiter, range.end) + this.delimiter.length;
-    return start >= 0 && end > start + this.delimiter.length ? { start, end } : undefined;
+    return start >= 0 && end > start + this.delimiter.length
+      ? { start, end }
+      : undefined;
   }
 }
 
-export const quotes = textObjectToCommand(new SingleDelimiter("\""));
+export const quotes = textObjectToCommand(new SingleDelimiter('"'));
 export const tick = textObjectToCommand(new SingleDelimiter("`"));
 export const tripleTick = textObjectToCommand(new SingleDelimiter("```"));
 
 function pairedDelimiter(open: string, close: string): TextObject {
-  if (open === close
-    && open.indexOf(close) === -1
-    && close.indexOf(open) === -1) {
-    throw new Error("Open and close delimiters can not be identical, nor contain eachother! " + open + " === " + close);
+  if (
+    open === close &&
+    open.indexOf(close) === -1 &&
+    close.indexOf(open) === -1
+  ) {
+    throw new Error(
+      "Open and close delimiters can not be identical, nor contain eachother! " +
+        open +
+        " === " +
+        close
+    );
   }
 
-  function findNextDelimiter(text: string, from: number, direction: 1 | -1): { index: number, delimiter: string } {
+  function findNextDelimiter(
+    text: string,
+    from: number,
+    direction: 1 | -1
+  ): { index: number; delimiter: string } {
     while (from >= 0 && from < text.length) {
       if (text.substr(from, open.length) === open) {
         return { index: from, delimiter: open };
@@ -313,7 +362,13 @@ function pairedDelimiter(open: string, close: string): TextObject {
     return { index: -1, delimiter: "" };
   }
 
-  function findPartner(text: string, needs: string, from: number, direction: 1 | -1, count: number = 0): number {
+  function findPartner(
+    text: string,
+    needs: string,
+    from: number,
+    direction: 1 | -1,
+    count: number = 0
+  ): number {
     const has = needs === open ? close : open;
     while (from >= 0 && from < text.length) {
       if (text.substr(from, has.length) === has) {
@@ -361,9 +416,50 @@ function pairedDelimiter(open: string, close: string): TextObject {
     expand(text: string, { start, end }: Range): Range | undefined {
       return undefined;
     }
-  }
+  };
 }
 
 export const parentheses = textObjectToCommand(pairedDelimiter("(", ")"));
 export const curlybrackets = textObjectToCommand(pairedDelimiter("{", "}"));
 export const brackets = textObjectToCommand(pairedDelimiter("[", "]"));
+
+function stringObject(literal: string): TextObject {
+  const { length } = literal;
+  return {
+    findNext(text, { end }) {
+      const nextMatch = text.indexOf(literal, end);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    },
+    findPrev(text, { start }) {
+      const nextMatch = text.lastIndexOf(literal, start);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    },
+    expand(text, { end }) {
+      const nextMatch = text.indexOf(literal, end);
+      return nextMatch !== -1
+        ? { start: nextMatch, end: nextMatch + length }
+        : undefined;
+    }
+  };
+}
+
+export async function findText(initialStack: Stack) {
+  let literal = "";
+  async function handler(stack: Stack, main: any, char: string): CommandResult {
+    if (char === "\n") {
+      if (literal !== "") {
+        return await textObjectToCommand(stringObject(literal))(stack, main);
+      } else {
+        return { stack };
+      }
+    } else {
+      literal += char;
+      return { stack, handler };
+    }
+  }
+  return { stack: initialStack, handler };
+}
