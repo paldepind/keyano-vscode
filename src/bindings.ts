@@ -46,6 +46,12 @@ function addBinding(key: string, command: Command): void {
   originalBindings.set(key, command);
 }
 
+function addBindings(map: Record<string, Command>): void {
+  for (const key of Object.keys(map)) {
+    addBinding(key, map[key]);
+  }
+}
+
 export type KeyboardLayout = "qwerty" | "colemak";
 
 function translateBindings(
@@ -73,42 +79,41 @@ export function getBindings(layout: KeyboardLayout): Bindings {
 
 // the classic lower left setup
 
-addBinding("z", actions.undo);
-addBinding("x", actions.cut);
-addBinding("c", actions.copy);
-addBinding("v", actions.paste);
+addBindings({
+  z: actions.undo,
+  x: actions.cut,
+  c: actions.copy,
+  v: actions.paste,
+  t: actions.join,
+  T: actions.joinSelect,
 
-addBinding("t", actions.join);
-addBinding("T", actions.joinSelect);
-addBinding("d", actions.change);
+  // mode switching
+  d: actions.change,
+  i: actions.insertBefore,
+  o: actions.insertAfter,
 
-// mode switching
+  // flags
+  p: flags.previous,
+  n: flags.next,
+  a: flags.all,
+  e: flags.expand,
+  s: flags.jump,
 
-addBinding("i", actions.insertBefore);
-addBinding("o", actions.insertAfter);
+  // text objects
+  "(": textObjects.parentheses,
+  "{": textObjects.curlybrackets,
+  "[": textObjects.brackets,
+  y: composeCommand(flags.next, textObjects.buffer),
+  q: textObjects.line,
+  w: textObjects.word,
+  '"': textObjects.quotes,
+  "`": textObjects.tick,
+  "~": textObjects.tripleTick,
+  f: textObjects.findText,
 
-addBinding("p", flags.previous);
-addBinding("n", flags.next);
-addBinding("a", flags.all);
-addBinding("e", flags.expand);
-addBinding("s", flags.jump);
-
-// text objects
-
-addBinding("(", textObjects.parentheses);
-addBinding("{", textObjects.curlybrackets);
-addBinding("[", textObjects.brackets);
-addBinding("y", composeCommand(flags.next, textObjects.buffer));
-addBinding("q", textObjects.line);
-addBinding("w", textObjects.word);
-addBinding('"', textObjects.quotes);
-addBinding("`", textObjects.tick);
-addBinding("~", textObjects.tripleTick);
-addBinding("f", textObjects.findText);
-
-// right hand homerow
-
-addBinding("j", composeCommand(flags.previous, textObjects.word));
-addBinding("k", composeCommand(flags.next, textObjects.line));
-addBinding("l", composeCommand(flags.previous, textObjects.line));
-addBinding(";", composeCommand(flags.next, textObjects.word));
+  // right hand homerow
+  j: composeCommand(flags.previous, textObjects.word),
+  k: composeCommand(flags.next, textObjects.line),
+  l: composeCommand(flags.previous, textObjects.line),
+  ";": composeCommand(flags.next, textObjects.word)
+});
