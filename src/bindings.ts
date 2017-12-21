@@ -91,7 +91,7 @@ addBinding("p", flags.previous);
 addBinding("n", flags.next);
 addBinding("a", flags.all);
 addBinding("e", flags.expand);
-addBinding("f", flags.jump);
+addBinding("s", flags.jump);
 
 // text objects
 
