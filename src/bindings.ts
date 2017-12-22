@@ -115,5 +115,8 @@ addBindings({
   j: composeCommand(flags.previous, textObjects.word),
   k: composeCommand(flags.next, textObjects.line),
   l: composeCommand(flags.previous, textObjects.line),
-  ";": composeCommand(flags.next, textObjects.word)
+  ";": composeCommand(flags.next, textObjects.word),
+
+  m: composeCommand(flags.previous, textObjects.character),
+  "/": textObjects.character
 });

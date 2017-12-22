@@ -94,6 +94,18 @@ function reverse(textObject: TextObject): TextObject {
   return newTextObject;
 }
 
+export const character = textObjectToCommand({
+  findNext(_text, { end }) {
+    return { start: end, end: end + 1 };
+  },
+  findPrev(_text, { start }) {
+    return { start: start - 1, end: start };
+  },
+  expand(_text, { start, end }) {
+    return { start: start + 1, end: end + 1 };
+  }
+});
+
 enum CharacterType {
   Whitespace,
   Word,
