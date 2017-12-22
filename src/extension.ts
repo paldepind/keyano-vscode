@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { StatusBarItem, window, StatusBarAlignment, workspace } from "vscode";
-import { Stack, Stackable, cons } from "./stack";
-import { getBindings, KeyboardLayout, Bindings } from "./bindings";
+import { Stack } from "./stack";
+import { getBindings, KeyboardLayout } from "./bindings";
 import { KeyCommand } from "./command";
 
 enum Mode {

@@ -4,7 +4,7 @@ import * as os from "os";
 import * as yaml from "js-yaml";
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { window, Selection, workspace } from "vscode";
+import { window, Selection } from "vscode";
 import { extension } from "../src/extension";
 
 function randomName() {
@@ -24,9 +24,7 @@ async function createRandomFile(contents: string): Promise<vscode.Uri> {
   }
 }
 
-let originalKeyboardLayout: string;
-
-async function setupWorkspace(fileExtension: string = ""): Promise<void> {
+async function setupWorkspace(_fileExtension: string = ""): Promise<void> {
   if (vscode.window.activeTextEditor === undefined) {
     // should only run once before the first test
     const file = await createRandomFile("");

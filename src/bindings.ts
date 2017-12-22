@@ -15,7 +15,7 @@ const qwertyToColemak = new Map([
   ["o", "y"],
   ["p", ";"],
   ["a", "a"],
-  ["s", "s"],
+  ["s", "r"],
   ["d", "s"],
   ["f", "t"],
   ["g", "d"],

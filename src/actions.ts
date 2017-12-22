@@ -16,7 +16,7 @@ export function actionCommand(
 
 function insert(before: boolean): Command {
   const prop = before ? "start" : "end";
-  return async (stack: Stack, main: Extension) => {
+  return async (_, main: Extension) => {
     const editor = window.activeTextEditor!;
     editor.selections = editor.selections.map(
       (s) => new Selection(s[prop], s[prop])
@@ -43,7 +43,7 @@ export const paste = actionCommand(() =>
   commands.executeCommand("editor.action.clipboardPasteAction")
 );
 
-export const change = actionCommand(async (stack, main) => {
+export const change = actionCommand(async (_, main) => {
   await commands.executeCommand("editor.action.clipboardCutAction");
   main.enterInsertMode();
 });

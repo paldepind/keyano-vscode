@@ -2,12 +2,7 @@ export interface Stackable {
   toString: () => string;
 }
 
-export type Stack =
-  | {
-      head: Stackable;
-      tail: Stack;
-    }
-  | undefined;
+export type Stack = { head: Stackable; tail: Stack } | undefined;
 
 type Argument<A, B> = {
   isType: (elm: any) => elm is A;
@@ -36,9 +31,7 @@ export function readArgumentsFromStack<S extends Specification>(
   }, {});
   while (stack !== undefined) {
     const head = stack.head;
-    const match = Object.entries(spec).find(([key, { isType }]) =>
-      isType(head)
-    );
+    const match = Object.entries(spec).find(([_, { isType }]) => isType(head));
     if (match !== undefined) {
       const [key, { handler = id }] = match;
       args[key] = handler(head);

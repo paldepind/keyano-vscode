@@ -1,4 +1,3 @@
-import { Stack } from "./stack";
 import { pushToStack } from "./command";
 
 export const directions = {

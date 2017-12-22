@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Range, Position, Selection, ThemeColor } from "vscode";
+import { Range, Position, Selection } from "vscode";
 
 import { TextObject } from "./textobjects";
 
@@ -48,10 +48,6 @@ function createDataUriCaches(codes: string[]) {
         "white"
       ))
   );
-}
-
-function getCodeIndex(code: string): number {
-  return (code.charCodeAt(0) - 97) * numCharCodes + code.charCodeAt(1) - 97;
 }
 
 function createTextEditorDecorationType(charsToOffset: number) {
@@ -132,7 +128,7 @@ export function setTargets(textObject: TextObject): Target[] {
     result = textObject.findNext(text, result);
   }
 
-  const decorations = targets.map(({ keys, from, to }, idx) =>
+  const decorations = targets.map(({ keys, from }, _idx) =>
     createDecorationOptions(
       document.positionAt(from),
       document.positionAt(from + 2),

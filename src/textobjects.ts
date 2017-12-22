@@ -1,17 +1,15 @@
-import { window, Selection, TextDocument } from "vscode";
+import { window } from "vscode";
 import * as stackHelpers from "./stack";
 import { Stack } from "./stack";
 import {
   directions,
   isDirection,
-  isNumber,
   isJump,
   isAll,
-  Direction,
   isExpand
 } from "./flags";
 import * as jump from "./jump";
-import { Command, KeyCommand, CommandResult } from "./command";
+import { Command, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
 
 export interface TextObject {
@@ -124,10 +122,6 @@ function isWhitespace(char: string): boolean {
 
 const wordSeperators = new Set("~!@#$ %^&*()-=+[{]}\\|;:'\",.<>/?");
 
-function isWordSeperator(char: string): boolean {
-  return wordSeperators.has(char);
-}
-
 function getCharacterType(char: string): CharacterType {
   if (isWhitespace(char)) {
     return CharacterType.Whitespace;
@@ -156,25 +150,6 @@ function findWhere(
   while (i >= 0 && i < text.length) {
     if (predicate(text[i])) {
       return i;
-    }
-    i += direction;
-  }
-  return -1;
-}
-
-function findBorder(
-  text: string,
-  inside: (char: string) => boolean,
-  outside: (char: string) => boolean,
-  from: number,
-  direction: 1 | -1 = 1
-): number {
-  let i = from + direction;
-  while (i >= 0 && i < text.length) {
-    if ((i === 0 || i === text.length - 1) && inside(text[i])) {
-      return i;
-    } else if (outside(text[i]) && inside(text[i - direction])) {
-      return i - direction;
     }
     i += direction;
   }
@@ -339,7 +314,7 @@ function pairedDelimiter(open: string, close: string): TextObject {
     close.indexOf(open) === -1
   ) {
     throw new Error(
-      "Open and close delimiters can not be identical, nor contain eachother! " +
+      "Open and close delimiters can not be identical, nor contain each other! " +
         open +
         " === " +
         close
@@ -413,8 +388,8 @@ function pairedDelimiter(open: string, close: string): TextObject {
       return undefined;
     },
 
-    expand(text: string, { start, end }: Range): Range | undefined {
-      return undefined;
+    expand(_text: string, _range: Range): Range | undefined {
+      return undefined; // TODO: Implement this
     }
   };
 }

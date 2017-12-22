@@ -1,4 +1,4 @@
-import { workspace, window, Selection, TextDocument } from "vscode";
+import { window, Selection, TextDocument } from "vscode";
 
 // Helper functions for interacting with VSCode
 

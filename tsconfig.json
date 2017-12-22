@@ -6,7 +6,9 @@
     "lib": ["es2017"],
     "sourceMap": true,
     "rootDir": ".",
-    "strict": true
+    "strict": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true
   },
   "exclude": ["node_modules", ".vscode-test"]
 }

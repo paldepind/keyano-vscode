@@ -26,14 +26,14 @@
     text is: |
       first second third
     selections are: [" ", " "]
-- describe: change
-  scenarios:
-  - it: deletes text and enters insert mode
-    start: |
-      here [is] some words
-    input: dare
-    text is: |
-      here are some words
+# - describe: change
+#   scenarios:
+#   - it: deletes text and enters insert mode
+#     start: |
+#       here [is] some words
+#     input: dare
+#     text is: |
+#       here are some words
 
 # Text objects
 - describe: word
