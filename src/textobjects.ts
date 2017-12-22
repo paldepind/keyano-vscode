@@ -1,13 +1,7 @@
 import { window } from "vscode";
 import * as stackHelpers from "./stack";
 import { Stack } from "./stack";
-import {
-  directions,
-  isDirection,
-  isJump,
-  isAll,
-  isExpand
-} from "./flags";
+import { directions, isDirection, isJump, isAll, isExpand } from "./flags";
 import * as jump from "./jump";
 import { Command, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
@@ -106,18 +100,10 @@ enum CharacterType {
   NonWord
 }
 
+const whitespaceRegexp = /^\s+$/;
+
 function isWhitespace(char: string): boolean {
-  if (
-    char === "\u0020" ||
-    char === "\u0009" ||
-    char === "\u000A" ||
-    char === "\u000C" ||
-    char === "\u000D"
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+  return char.match(whitespaceRegexp) !== null;
 }
 
 const wordSeperators = new Set("~!@#$ %^&*()-=+[{]}\\|;:'\",.<>/?");
