@@ -110,6 +110,7 @@ addBindings({
   "`": textObjects.tick,
   "~": textObjects.tripleTick,
   f: textObjects.findText,
+  O: textObjects.operator,
 
   // right hand homerow
   j: composeCommand(flags.previous, textObjects.word),

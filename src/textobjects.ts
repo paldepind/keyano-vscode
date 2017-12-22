@@ -1,13 +1,7 @@
 import { window } from "vscode";
 import * as stackHelpers from "./stack";
 import { Stack } from "./stack";
-import {
-  directions,
-  isDirection,
-  isJump,
-  isAll,
-  isExpand
-} from "./flags";
+import { directions, isDirection, isJump, isAll, isExpand } from "./flags";
 import * as jump from "./jump";
 import { Command, CommandResult } from "./command";
 import { rangeToSelection, selectionToRange, Range } from "./editor";
@@ -120,12 +114,12 @@ function isWhitespace(char: string): boolean {
   }
 }
 
-const wordSeperators = new Set("~!@#$ %^&*()-=+[{]}\\|;:'\",.<>/?");
+const wordSeparators = new Set("~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?");
 
 function getCharacterType(char: string): CharacterType {
   if (isWhitespace(char)) {
     return CharacterType.Whitespace;
-  } else if (wordSeperators.has(char)) {
+  } else if (wordSeparators.has(char)) {
     return CharacterType.NonWord;
   } else {
     return CharacterType.Word;
@@ -136,8 +130,8 @@ function isWordChar(char: string): boolean {
   return getCharacterType(char) === CharacterType.Word;
 }
 
-function notWordChar(char: string): boolean {
-  return !isWordChar(char);
+function isSymbol(char: string): boolean {
+  return wordSeparators.has(char);
 }
 
 function findWhere(
@@ -156,67 +150,74 @@ function findWhere(
   return -1;
 }
 
-export const word = textObjectToCommand({
-  findNext(text: string, { start, end }: Range) {
-    end = findWhere(text, isWordChar, end, 1) + 1;
-    if (end > 0) {
-      end = findWhere(text, notWordChar, end - 1);
-      end = end >= 0 ? end : text.length;
-    } else {
-      return undefined;
-    }
+function textObjectFromPredicate(predicate: (char: string) => boolean) {
+  const negPredicate = (char: string) => !predicate(char);
+  return {
+    findNext(text: string, { end }: Range) {
+      let newEnd = findWhere(text, predicate, end, 1) + 1;
+      if (newEnd > 0) {
+        newEnd = findWhere(text, negPredicate, newEnd - 1);
+        newEnd = newEnd >= 0 ? newEnd : text.length;
+      } else {
+        return undefined;
+      }
 
-    start = findWhere(text, notWordChar, end - 1, -1) + 1;
-    start = start >= 0 ? start : 0;
+      let start = findWhere(text, negPredicate, newEnd - 1, -1) + 1;
+      start = start >= 0 ? start : 0;
 
-    return { start, end: end };
-  },
+      return { start, end: newEnd };
+    },
 
-  findPrev(text: string, { start, end }: Range) {
-    start = findWhere(text, isWordChar, start - 1, -1);
-    if (start > 0) {
-      start = findWhere(text, notWordChar, start, -1) + 1;
-    } else if (start < 0) {
-      return undefined;
-    }
-
-    end = findWhere(text, notWordChar, start + 1, 1);
-    end = end >= 0 ? end : text.length;
-
-    return { start, end };
-  },
-
-  expand(text: string, range: Range) {
-    let start = findWhere(text, isWordChar, range.start, -1);
-    if (start > 0) {
-      start = findWhere(text, notWordChar, start, -1) + 1;
-    }
-    let end = findWhere(text, isWordChar, range.end - 1, 1) + 1;
-    if (end > 0) {
-      end = findWhere(text, notWordChar, end - 1);
-      end = end >= 0 ? end : text.length;
-    }
-
-    if (start === range.start && end === range.end) {
-      start = findWhere(text, isWordChar, range.start - 1, -1);
+    findPrev(text: string, { start }: Range) {
+      start = findWhere(text, predicate, start - 1, -1);
       if (start > 0) {
-        start = findWhere(text, notWordChar, start, -1) + 1;
-      } else {
-        start = range.start;
+        start = findWhere(text, negPredicate, start, -1) + 1;
+      } else if (start < 0) {
+        return undefined;
       }
-      end = findWhere(text, isWordChar, range.end, 1) + 1;
+
+      let end = findWhere(text, negPredicate, start + 1, 1);
+      end = end >= 0 ? end : text.length;
+
+      return { start, end };
+    },
+
+    expand(text: string, range: Range) {
+      let start = findWhere(text, predicate, range.start, -1);
+      if (start > 0) {
+        start = findWhere(text, negPredicate, start, -1) + 1;
+      }
+      let end = findWhere(text, predicate, range.end - 1, 1) + 1;
       if (end > 0) {
-        end = findWhere(text, notWordChar, end - 1);
+        end = findWhere(text, negPredicate, end - 1);
         end = end >= 0 ? end : text.length;
-      } else {
-        end = range.end;
       }
+
+      if (start === range.start && end === range.end) {
+        start = findWhere(text, predicate, range.start - 1, -1);
+        if (start > 0) {
+          start = findWhere(text, negPredicate, start, -1) + 1;
+        } else {
+          start = range.start;
+        }
+        end = findWhere(text, predicate, range.end, 1) + 1;
+        if (end > 0) {
+          end = findWhere(text, negPredicate, end - 1);
+          end = end >= 0 ? end : text.length;
+        } else {
+          end = range.end;
+        }
+      }
+      return start !== range.start || end !== range.end
+        ? { start, end }
+        : undefined;
     }
-    return start !== range.start || end !== range.end
-      ? { start, end }
-      : undefined;
-  }
-});
+  };
+}
+
+export const word = textObjectToCommand(textObjectFromPredicate(isWordChar));
+
+export const operator = textObjectToCommand(textObjectFromPredicate(isSymbol));
 
 function entireDocumentRange(
   text: string,
