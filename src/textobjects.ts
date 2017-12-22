@@ -94,24 +94,28 @@ function reverse(textObject: TextObject): TextObject {
   return newTextObject;
 }
 
+export const character = textObjectToCommand({
+  findNext(_text, { end }) {
+    return { start: end, end: end + 1 };
+  },
+  findPrev(_text, { start }) {
+    return { start: start - 1, end: start };
+  },
+  expand(_text, { start, end }) {
+    return { start: start + 1, end: end + 1 };
+  }
+});
+
 enum CharacterType {
   Whitespace,
   Word,
   NonWord
 }
 
+const whitespaceRegexp = /^\s+$/;
+
 function isWhitespace(char: string): boolean {
-  if (
-    char === "\u0020" ||
-    char === "\u0009" ||
-    char === "\u000A" ||
-    char === "\u000C" ||
-    char === "\u000D"
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+  return char.match(whitespaceRegexp) !== null;
 }
 
 const wordSeparators = new Set("~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?");
