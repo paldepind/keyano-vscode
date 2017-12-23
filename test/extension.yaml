@@ -108,6 +108,10 @@
       start: foo [bar]
       input: ;
       selection is: bar
+    - it: selects first word inside selection
+      start: zebra [horse goat dog] rabbit
+      input: ;
+      selection is: horse
   - describe: "#findPrev()"
     scenarios:
     - it: selects word

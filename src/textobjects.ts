@@ -138,11 +138,13 @@ function isSymbol(char: string): boolean {
   return wordSeparators.has(char);
 }
 
+type direction = 1 | -1;
+
 function findWhere(
   text: string,
   predicate: (char: string) => boolean,
   from: number,
-  direction: 1 | -1 = 1
+  direction: direction = 1
 ): number {
   let i = from;
   while (i >= 0 && i < text.length) {
@@ -154,38 +156,46 @@ function findWhere(
   return -1;
 }
 
+function findWhile(
+  text: string,
+  predicate: (char: string) => boolean,
+  from: number,
+  direction: direction
+) {
+  let i = from;
+  while (
+    (direction === 1 || i > 0) &&
+    (direction === -1 || i < text.length - 1) &&
+    predicate(text[i + direction])
+  ) {
+    i += direction;
+  }
+  return i;
+}
+
 function textObjectFromPredicate(predicate: (char: string) => boolean) {
   const negPredicate = (char: string) => !predicate(char);
   return {
     findNext(text: string, { end }: Range) {
-      let newEnd = findWhere(text, predicate, end, 1) + 1;
-      if (newEnd > 0) {
-        newEnd = findWhere(text, negPredicate, newEnd - 1);
-        newEnd = newEnd >= 0 ? newEnd : text.length;
-      } else {
+      const found = findWhere(text, predicate, end, 1);
+      if (found === -1) {
         return undefined;
       }
-
-      let start = findWhere(text, negPredicate, newEnd - 1, -1) + 1;
-      start = start >= 0 ? start : 0;
-
-      return { start, end: newEnd };
+      const newEnd = findWhile(text, predicate, found, 1);
+      const newStart = findWhile(text, predicate, newEnd, -1);
+      return { start: newStart, end: newEnd + 1 };
     },
-
     findPrev(text: string, { start }: Range) {
-      start = findWhere(text, predicate, start - 1, -1);
-      if (start > 0) {
-        start = findWhere(text, negPredicate, start, -1) + 1;
-      } else if (start < 0) {
+      const found = findWhere(text, predicate, start - 1, -1);
+      if (found === -1) {
         return undefined;
       }
+      const newStart =
+        found > 0 ? findWhere(text, negPredicate, found, -1) + 1 : found;
+      const end = findWhile(text, predicate, newStart, 1) + 1;
 
-      let end = findWhere(text, negPredicate, start + 1, 1);
-      end = end >= 0 ? end : text.length;
-
-      return { start, end };
+      return { start: newStart, end };
     },
-
     expand(text: string, range: Range) {
       let start = findWhere(text, predicate, range.start, -1);
       if (start > 0) {
