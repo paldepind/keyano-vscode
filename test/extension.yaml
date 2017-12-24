@@ -52,10 +52,10 @@
       start: "|a"
       input: ;
       selection is: a
-    - it: selects the word it's inside, right
-      start: fo|o
+    - it: selects the next word right
+      start: fo|o bar
       input: ;
-      selection is: foo
+      selection is: bar
     - it: selects next word from end
       start: foo| bar
       input: ;

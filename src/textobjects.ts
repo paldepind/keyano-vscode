@@ -140,6 +140,9 @@ function isSymbol(char: string): boolean {
 
 type direction = 1 | -1;
 
+const left = -1;
+const right = 1;
+
 function findWhere(
   text: string,
   predicate: (char: string) => boolean,
@@ -176,14 +179,36 @@ function findWhile(
 function textObjectFromPredicate(predicate: (char: string) => boolean) {
   const negPredicate = (char: string) => !predicate(char);
   return {
-    findNext(text: string, { end }: Range) {
-      const found = findWhere(text, predicate, end, 1);
+    findNext(text: string, { start, end }: Range) {
+      let newStart;
+      if (
+        predicate(text[start]) &&
+        start === end &&
+        (start === 0 || negPredicate(text[start - 1]))
+      ) {
+        newStart = start;
+      } else {
+        const nonObj = findWhere(text, negPredicate, start, right);
+        if (nonObj === -1) {
+          return undefined;
+        }
+        newStart = findWhere(text, predicate, nonObj, right);
+        if (newStart === -1) {
+          return undefined;
+        }
+      }
+      const newEnd = findWhile(text, predicate, newStart, right) + 1;
+      return { start: newStart, end: newEnd };
+
+      /*
+      const found = findWhere(text, predicate, end, right);
       if (found === -1) {
         return undefined;
       }
-      const newEnd = findWhile(text, predicate, found, 1);
-      const newStart = findWhile(text, predicate, newEnd, -1);
+      const newEnd = findWhile(text, predicate, found, right);
+      const newStart = findWhile(text, predicate, newEnd, left);
       return { start: newStart, end: newEnd + 1 };
+      */
     },
     findPrev(text: string, { start }: Range) {
       const found = findWhere(text, predicate, start - 1, -1);
