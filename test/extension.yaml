@@ -44,10 +44,10 @@
       start: "|foo"
       input: ;
       selection is: foo
-    - it: selects the word it's inside, left
+    - it: does not select the word it's inside, left
       start: f|oo
       input: ;
-      selection is: foo
+      selection is: ""
     - it: selects single char
       start: "|a"
       input: ;

@@ -182,9 +182,9 @@ function textObjectFromPredicate(predicate: (char: string) => boolean) {
     findNext(text: string, { start, end }: Range) {
       let newStart;
       if (
-        predicate(text[start]) &&
-        start === end &&
-        (start === 0 || negPredicate(text[start - 1]))
+        (start < text.length && predicate(text[start])) &&
+        (start === 0 || negPredicate(text[start - 1])) &&
+        end !== (findWhile(text, predicate, start, right) + 1)
       ) {
         newStart = start;
       } else {
