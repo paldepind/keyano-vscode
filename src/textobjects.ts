@@ -199,16 +199,6 @@ function textObjectFromPredicate(predicate: (char: string) => boolean) {
       }
       const newEnd = findWhile(text, predicate, newStart, right) + 1;
       return { start: newStart, end: newEnd };
-
-      /*
-      const found = findWhere(text, predicate, end, right);
-      if (found === -1) {
-        return undefined;
-      }
-      const newEnd = findWhile(text, predicate, found, right);
-      const newStart = findWhile(text, predicate, newEnd, left);
-      return { start: newStart, end: newEnd + 1 };
-      */
     },
     findPrev(text: string, { start }: Range) {
       const found = findWhere(text, predicate, start - 1, -1);
